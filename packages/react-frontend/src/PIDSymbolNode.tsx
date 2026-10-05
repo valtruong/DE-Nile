@@ -3,7 +3,7 @@ import { Handle, Position } from "@xyflow/react";
 import checkValve from "./assets/check-valve.svg";
 import engine from "./assets/engine.svg";
 import pneumaticValve from "./assets/pneumatic-valve.svg";
-import pressureTransducer from "./assets/pressure transducer.svg";
+import pressureTransducer from "./assets/pressure-transducer.svg";
 import tank from "./assets/tank.svg";
 
 const symbols =

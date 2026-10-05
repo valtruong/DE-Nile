@@ -1,3 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Inkscape (http://www.inkscape.org/) -->
-<svg width="30.427mm" height="11.906mm" version="1.1" viewBox="0 0 30.427 11.906" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><defs/><g transform="translate(-20.135 43.917)"><g stroke="#fff"><path transform="translate(4.3914 -43.506)" d="m18.365 6.0954h5.2275" fill="none" stroke-width=".15"/><path transform="translate(24.348 -43.487)" d="m18.365 6.0954h5.2275" fill="none" stroke-width=".15"/><g stroke-width=".3"><circle cx="35.324" cy="-37.409" r="1.1778" fill-opacity=".98911" stroke-linecap="round"/><circle cx="30.342" cy="-39.888" r="1.1778" fill-opacity=".98911" stroke-linecap="round"/><path d="m30.345-39.874 4.979 2.4722-4.979 2.4722zm9.9581 0-4.979 2.4722 4.979 2.4722z" fill="none" pointer-events="all" stroke-linejoin="round" stroke-miterlimit="10"/></g></g></g></svg>
+<svg width="45" height="18" viewBox="0 0 45 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="9.5" cy="2.5" r="2.5" fill="white"/>
+<line y1="9.5" x2="10" y2="9.5" stroke="white"/>
+<line x1="35" y1="9.5" x2="45" y2="9.5" stroke="white"/>
+<line x1="9.75" y1="2" x2="9.75" y2="18" stroke="white" stroke-width="1.5"/>
+<line x1="34.75" y1="2" x2="34.75" y2="18" stroke="white" stroke-width="1.5"/>
+<path d="M34 18L29.7035 10.4807L25.3398 17.9612L34 18ZM10 4L9.6221 4.64783L27.7916 15.2467L28.1695 14.5989L28.5474 13.951L10.3779 3.35217L10 4Z" fill="white"/>
+</svg>

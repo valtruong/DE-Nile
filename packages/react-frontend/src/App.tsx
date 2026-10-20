@@ -130,6 +130,7 @@ import {
   addEdge,
   useEdgesState,
   useNodesState,
+  type Connection,
 } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
@@ -170,11 +171,11 @@ const initialEdges = [
 ];
 
 function App() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [nodes, , onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
   const onConnect = useCallback(
-    (connection: any) => {
+    (connection: Connection) => {
       setEdges((currentEdges) => addEdge(connection, currentEdges));
     },
     [setEdges],

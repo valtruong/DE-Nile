@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "id": "simulated-fuel-system",
+  "name": "Simulated fuel system — example tags only",
+  "equipment": [
+    {
+      "id": "fuel-tank",
+      "kind": "tank",
+      "label": "Fuel Tank",
+      "position": { "x": 0, "y": 100 }
+    },
+    {
+      "id": "fuel-valve",
+      "kind": "pneumatic-valve",
+      "label": "Fuel Valve",
+      "position": { "x": 220, "y": 100 },
+      "binding": {
+        "topic": "demo.valve",
+        "valueType": "string",
+        "states": [
+          {
+            "value": "open",
+            "label": "Open",
+            "color": "#16794b"
+          },
+          {
+            "value": "closed",
+            "label": "Closed",
+            "color": "#b42318"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fuel-check",
+      "kind": "check-valve",
+      "label": "Check Valve",
+      "position": { "x": 440, "y": 100 }
+    },
+    {
+      "id": "fuel-pressure",
+      "kind": "pressure-transducer",
+      "label": "Fuel Pressure",
+      "position": { "x": 660, "y": 100 },
+      "binding": {
+        "topic": "demo.pressure",
+        "valueType": "number",
+        "unit": "kPa",
+        "precision": 1
+      }
+    },
+    {
+      "id": "engine",
+      "kind": "engine",
+      "label": "Rocket Engine",
+      "position": { "x": 880, "y": 100 }
+    }
+  ],
+  "connections": [
+    {
+      "id": "fuel-line-1",
+      "source": "fuel-tank",
+      "target": "fuel-valve",
+      "label": "Fuel",
+      "color": "#8552a1",
+      "routing": "orthogonal"
+    },
+    {
+      "id": "fuel-line-2",
+      "source": "fuel-valve",
+      "target": "fuel-check",
+      "color": "#8552a1",
+      "routing": "orthogonal"
+    },
+    {
+      "id": "fuel-line-3",
+      "source": "fuel-check",
+      "target": "fuel-pressure",
+      "color": "#8552a1",
+      "routing": "orthogonal"
+    },
+    {
+      "id": "fuel-line-4",
+      "source": "fuel-pressure",
+      "target": "engine",
+      "color": "#8552a1",
+      "routing": "orthogonal"
+    }
+  ]
+}

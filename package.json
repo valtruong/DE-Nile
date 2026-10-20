@@ -5,9 +5,19 @@
     "@eslint/js": "^10.0.1",
     "eslint": "^10.11.0",
     "globals": "^17.12.0",
-    "prettier": "^3.9.8"
+    "prettier": "^3.9.8",
+    "typescript-eslint": "^8.69.0"
   },
   "scripts": {
-    "format": "prettier --write './**/*.{js,jsx,ts,tsx,css,md,json}' --config ./.prettierrc"
-  }
+    "format": "prettier --write './**/*.{js,jsx,ts,tsx,css,md,json}' --config ./.prettierrc",
+    "build": "npm run build --workspace=@de-nile/pid-viewer && npm run build --workspace=de-nile",
+    "test": "npm test --workspace=@de-nile/pid-viewer",
+    "lint": "npm run lint --workspaces",
+    "test:riverdash": "node scripts/check-riverdash.mjs"
+  },
+  "private": true,
+  "workspaces": [
+    "packages/react-frontend",
+    "packages/pid-viewer"
+  ]
 }

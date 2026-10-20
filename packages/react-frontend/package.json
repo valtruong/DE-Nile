@@ -12,7 +12,8 @@
   "dependencies": {
     "@xyflow/react": "^12.12.0",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "@de-nile/pid-viewer": "0.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

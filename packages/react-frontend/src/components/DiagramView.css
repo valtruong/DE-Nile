@@ -1,0 +1,32 @@
+.diagram-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 24px 24px;
+  min-height: 0;
+}
+
+.diagram-hint {
+  margin: 0 0 12px;
+  text-align: right;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.diagram-canvas {
+  flex: 1;
+  min-height: 400px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* React Flow fills 100% of its parent, which needs a real
+   height; an absolutely placed box gives it one inside the
+   flex layout. */
+.diagram-canvas-inner {
+  position: absolute;
+  inset: 0;
+}

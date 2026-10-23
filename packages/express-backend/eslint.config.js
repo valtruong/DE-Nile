@@ -4,9 +4,10 @@ import js from "@eslint/js";
 export default [
   { ignores: ["dist"] },
   {
-    files: ["**/*.{js}"],
+    files: ["**/*.js"],
     languageOptions: {
-      ecmaVersion: 2020,
+      ecmaVersion: 2022,
+      globals: { process: "readonly", console: "readonly" },
       parserOptions: {
         ecmaVersion: "latest",
         sourceType: "module",

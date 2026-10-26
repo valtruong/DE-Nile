@@ -1,0 +1,26 @@
+{
+  "name": "de-nile-backend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "test": "vitest run",
+    "lint": "eslint .",
+    "create-user": "node scripts/create-user.js",
+    "set-role": "node scripts/set-role.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "express": "^5.3.0",
+    "express-session": "^1.19.0",
+    "nodemailer": "^10.1.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.13.0",
+    "supertest": "^7.3.1",
+    "vitest": "^5.0.5"
+  }
+}

@@ -106,15 +106,19 @@ panel provides text access to all states. Diagrams are validated
 at the viewer boundary; malformed configurations render an error
 instead of a partial canvas.
 
-SVG paths are provisional examples requiring CPSS symbol review.
-Pass
+Default SVGs match the team's symbol assets merged from main.
+Keep `src/assets/` in sync with the frontend originals when
+updating symbols. Final CPSS convention approval remains a team
+decision. Pass
 `renderSymbol={(equipment) => <YourTeamSymbol kind={equipment.kind} />}`
 to reuse the team’s existing SVG components without changing the
 telemetry adapter. Real topic names/types/units, enum decoding,
 stale/disconnected reporting, and final host module registration
 remain integration decisions. No editor, login, database, or
-hardware-control behavior is included. The standalone app is a
-simulated demo.
+hardware-control behavior is included in the package. The
+standalone app retains the team’s authentication and diagram
+view; the optional telemetry demo uses the same access gate,
+including guest viewer mode.
 
 ## Check against Alvin's implementation
 

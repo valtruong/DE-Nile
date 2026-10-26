@@ -20,9 +20,9 @@ npm run dev --workspace=de-nile
 ```
 
 The default frontend retains the team’s existing canvas. Open
-`/?viewerDemo=1` for the optional package demonstration with
-five provisional equipment symbols and simulated telemetry. Turn
-off simulation to see unavailable-data behavior. The demo never
+`/?viewerDemo=1` for the optional package demonstration with the
+team’s five equipment SVGs and simulated telemetry. Turn off
+simulation to see unavailable-data behavior. The demo never
 connects to hardware.
 
 ## Repository structure
@@ -47,7 +47,7 @@ DE-Nile/
 │   │   │   ├── diagram.ts      # Configuration schema, types, and validation
 │   │   │   ├── telemetry.ts    # Read-only RiverDash adapter and display formatting
 │   │   │   ├── PIDViewer.tsx   # Embedded read-only React Flow viewer
-│   │   │   ├── symbols.tsx     # Provisional equipment SVG symbols
+│   │   │   ├── symbols.tsx     # Team equipment SVG symbols
 │   │   │   ├── example-diagram.json
 │   │   │   ├── style.css       # Viewer styles
 │   │   │   ├── index.ts        # Public component, adapter, and type exports
@@ -57,7 +57,7 @@ DE-Nile/
 │   │   ├── dist/               # Generated JavaScript, declarations, CSS, and example
 │   │   ├── package.json        # Package exports, dependencies, and build commands
 │   │   └── README.md           # Package usage and RiverDash integration guide
-│   └── express-backend/         # Placeholder containing only ESLint configuration
+│   └── express-backend/         # Express authentication server
 ├── docs/
 │   └── data-format.md          # Version 1 saved P&ID configuration format
 ├── scripts/
@@ -80,24 +80,30 @@ files are omitted for readability.
 ### Package responsibilities
 
 - **`react-frontend`** runs the standalone application. Its
-  default view is the existing interactive canvas. The optional
-  `/?viewerDemo=1` view exercises the reusable viewer with
-  simulated telemetry.
-- **`pid-viewer`** is the package RiverDash imports. It validates
-  saved diagrams, renders equipment and connections, and reads
-  telemetry through the host-provided data source. It does not
-  create a hardware connection or send hardware commands.
-  Equipment positions remain fixed during monitoring, and the
-  host can supply the team's SVG components through
+  default view uses the team’s authentication flow and diagram
+  canvas. The optional `/?viewerDemo=1` view exercises the
+  reusable viewer with simulated telemetry after sign-in or
+  continuing as a viewer.
+- **`pid-viewer`** is the package RiverDash imports. It
+  validates saved diagrams, renders equipment and connections,
+  and reads telemetry through the host-provided data source. It
+  does not create a hardware connection or send hardware
+  commands. Equipment positions remain fixed during monitoring,
+  and the host can supply the team's SVG components through
   `renderSymbol`.
-- **`express-backend`** has no application implementation yet.
-  It is not an npm workspace or a dependency of the embedded
-  viewer; RiverDash supplies the shared data table.
+- **`express-backend`** provides account creation, sign-in,
+  email verification, password reset, and roles. It has its own
+  package and setup instructions in
+  [the backend README](packages/express-backend/README.md).
+  Start it separately for authentication; the embedded viewer
+  continues to read telemetry from RiverDash's shared data
+  table.
 
 Treat `dist/` and npm package tarballs as generated output.
 Change source files and rebuild rather than editing generated
 files directly. The standalone diagram editor remains planned;
-the existing canvas and demo do not constitute a complete editor.
+the existing canvas and demo do not constitute a complete
+editor.
 
 ## Additional documentation
 
@@ -108,5 +114,5 @@ the existing canvas and demo do not constitute a complete editor.
 - [Contribution guidelines](contributing.md)
 
 Current real telemetry tag contracts, stale-data policies, and
-CPSS symbol approval remain open. See `SPEC.md` and
+final CPSS symbol approval remain open. See `SPEC.md` and
 `project-context.md` for project constraints.

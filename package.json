@@ -11,7 +11,7 @@
   "scripts": {
     "format": "prettier --write './**/*.{js,jsx,ts,tsx,css,md,json}' --config ./.prettierrc",
     "build": "npm run build --workspace=@de-nile/pid-viewer && npm run build --workspace=de-nile",
-    "test": "npm test --workspace=@de-nile/pid-viewer",
+    "test": "npm run test --workspaces --if-present",
     "lint": "npm run lint --workspaces",
     "test:riverdash": "node scripts/check-riverdash.mjs"
   },

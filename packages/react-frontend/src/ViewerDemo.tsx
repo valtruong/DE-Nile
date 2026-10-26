@@ -41,7 +41,7 @@ export default function ViewerDemo() {
         <div>
           <h1>DE-Nile P&amp;ID viewer</h1>
           <p>
-            Simulated readings and provisional symbols — no
+            Simulated readings with team equipment symbols — no
             hardware connection
           </p>
         </div>

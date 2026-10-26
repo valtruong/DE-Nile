@@ -25,9 +25,10 @@ definitions that drift apart.
   the configured type.
 
 See `packages/pid-viewer/src/example-diagram.json` for a
-complete example. Its `demo.*` tags, units, valve meanings, and
-symbol paths are simulated/provisional; they are not confirmed
-CPSS telemetry or approved symbols.
+complete example. Its `demo.*` tags, units, and valve meanings
+are simulated and are not confirmed CPSS telemetry. The viewer
+uses the team's SVG assets from main; final CPSS convention
+approval remains a team decision.
 
 Use `parseDiagram(jsonTextOrObject)` when opening
 configurations. It rejects malformed input, duplicate IDs,

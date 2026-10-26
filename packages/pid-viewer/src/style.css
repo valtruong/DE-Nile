@@ -47,3 +47,12 @@
   white-space: pre-wrap;
   padding: 16px;
 }
+
+/* The team's white-stroke SVG artwork needs a dark backing in a light host panel. */
+.denile-symbol {
+  display: block;
+  object-fit: contain;
+  background: #12151b;
+  border-radius: 4px;
+  padding: 6px;
+}

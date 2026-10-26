@@ -17,3 +17,5 @@ export {
   type Reading,
   type ReadTopic
 } from "./telemetry";
+
+export { EquipmentSymbol } from "./symbols";

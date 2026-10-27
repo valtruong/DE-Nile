@@ -1,10 +1,13 @@
 import {
   Handle,
   Position,
-  type Node,
   type NodeProps
 } from "@xyflow/react";
-import { EquipmentSymbol } from "@de-nile/pid-viewer";
+import type { SymbolKind, SymbolNode } from "./diagram/types";
+import {
+  EquipmentSymbol,
+  type Equipment
+} from "@de-nile/pid-viewer";
 
 // Keep the editor's existing kind names and IDs; adapt only at the display boundary.
 const equipmentKinds = {
@@ -13,12 +16,7 @@ const equipmentKinds = {
   pneumaticValve: "pneumatic-valve",
   pressureTransducer: "pressure-transducer",
   tank: "tank"
-} as const;
-export type SymbolNode = Node<
-  { kind: keyof typeof equipmentKinds; label: string },
-  "pidSymbol"
->;
-
+} as const satisfies Record<SymbolKind, Equipment["kind"]>;
 function PIDSymbolNode({ data }: NodeProps<SymbolNode>) {
   return (
     <div

@@ -36,6 +36,7 @@ DE-Nile/
 ├── packages/
 │   ├── react-frontend/          # Standalone React + TypeScript application
 │   │   ├── src/
+│   │   │   ├── diagram/         # Startup layout and shared editor node types
 │   │   │   ├── App.tsx          # Existing interactive diagram canvas
 │   │   │   ├── main.tsx         # Application entry and optional demo routing
 │   │   │   ├── ViewerDemo.tsx   # Simulated viewer integration example

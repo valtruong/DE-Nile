@@ -2,9 +2,12 @@ import express from "express";
 import session from "express-session";
 import { createAuthRouter } from "./auth/authRoutes.js";
 import { createMailer } from "./auth/mailer.js";
-import { createUserStore } from "./auth/userStore.js";
+import { createJsonUserStore } from "./auth/userStore.js";
 
+// Pass `userStore` (see src/db.js), or `usersFile` for a
+// local JSON store (handy in tests).
 export function createApp({
+  userStore: givenStore,
   usersFile,
   sessionSecret,
   mailer = createMailer(),
@@ -15,7 +18,8 @@ export function createApp({
   }
 
   const app = express();
-  const userStore = createUserStore(usersFile);
+  const userStore =
+    givenStore ?? createJsonUserStore(usersFile);
 
   app.use(express.json());
   app.use(

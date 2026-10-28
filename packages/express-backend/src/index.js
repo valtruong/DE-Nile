@@ -1,11 +1,19 @@
+// Loads packages/express-backend/.env (shared team settings:
+// database, email, secrets). It is git-ignored; copy
+// .env.example to start.
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { createApp } from "./app.js";
+import dotenv from "dotenv";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const usersFile =
-  process.env.USERS_FILE ??
-  path.join(here, "..", "data", "users.json");
+dotenv.config({
+  path: path.join(here, "..", ".env"),
+  quiet: true
+});
+
+const { createApp } = await import("./app.js");
+const { createMailer } = await import("./auth/mailer.js");
+const { openUserStore } = await import("./db.js");
 
 let sessionSecret = process.env.SESSION_SECRET;
 if (!sessionSecret) {
@@ -28,12 +36,28 @@ const allowedDomains = (
   .map((d) => d.trim().toLowerCase())
   .filter(Boolean);
 
+let store;
+try {
+  store = await openUserStore();
+} catch (err) {
+  console.error(err.message);
+  process.exit(1);
+}
+
+const mailer = createMailer();
 const app = createApp({
-  usersFile,
+  userStore: store.userStore,
   sessionSecret,
+  mailer,
   allowedDomains
 });
 
 app.listen(port, () => {
   console.log(`DE-Nile backend on http://localhost:${port}`);
+  console.log(`Accounts: ${store.where}`);
+  console.log(
+    mailer.kind === "smtp"
+      ? `Email: sending through ${process.env.SMTP_HOST}`
+      : "Email: printed here (set SMTP_* in .env to send real email)"
+  );
 });

@@ -5,9 +5,9 @@ import { isEmailVerified } from "./userStore.js";
 // A session stops counting once the account's password
 // changes after it was created, so resetting a password
 // signs out every other browser.
-export function sessionUser(req, userStore) {
+export async function sessionUser(req, userStore) {
   const userId = req.session?.userId;
-  const user = userId ? userStore.findById(userId) : null;
+  const user = userId ? await userStore.findById(userId) : null;
   if (!user || !isEmailVerified(user)) return null;
   if (
     user.passwordChangedAt &&

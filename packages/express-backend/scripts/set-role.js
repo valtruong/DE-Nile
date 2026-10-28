@@ -5,20 +5,10 @@
 //
 // Roles: viewer, editor, admin. Takes effect on their next
 // request; no need to sign out.
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { ROLES, isValidRole } from "../src/auth/roles.js";
-import {
-  normalizeEmail,
-  readUsers,
-  writeUsers
-} from "../src/auth/userStore.js";
-
-const here = path.dirname(fileURLToPath(import.meta.url));
-const usersFile =
-  process.env.USERS_FILE ??
-  path.join(here, "..", "data", "users.json");
+import { normalizeEmail } from "../src/auth/userStore.js";
+import { openStoreForScript } from "./open-store.js";
 
 const { values } = parseArgs({
   options: {
@@ -35,16 +25,17 @@ if (!email || !isValidRole(values.role)) {
   process.exit(1);
 }
 
-const users = readUsers(usersFile);
-const user = users.find(
-  (u) => normalizeEmail(u.email) === email
-);
+const { userStore, close } = await openStoreForScript();
+const user = await userStore.findByEmail(email);
 if (!user) {
   console.error(`No account for ${email}.`);
+  await close();
   process.exit(1);
 }
 
-const admins = users.filter((u) => u.role === "admin");
+const admins = (await userStore.list()).filter(
+  (u) => u.role === "admin"
+);
 if (
   user.role === "admin" &&
   values.role !== "admin" &&
@@ -53,10 +44,10 @@ if (
   console.error(
     "That's the only admin. Make someone else an admin first."
   );
+  await close();
   process.exit(1);
 }
 
-const previous = user.role;
-user.role = values.role;
-writeUsers(usersFile, users);
-console.log(`${email}: ${previous} → ${values.role}`);
+await userStore.update(user.id, { role: values.role });
+console.log(`${email}: ${user.role} → ${values.role}`);
+await close();

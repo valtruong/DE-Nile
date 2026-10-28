@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import express from "express";
 import bcrypt from "bcryptjs";
 import {
+  DuplicateEmailError,
   isEmailVerified,
   normalizeEmail,
   toPublicUser
@@ -59,14 +60,14 @@ export function createAuthRouter({
 
   async function sendCode(user) {
     const { code, record } = newVerification();
-    userStore.update(user.id, { verification: record });
+    await userStore.update(user.id, { verification: record });
     const message = verificationEmail(user.name, code);
     await mailer.send({ to: user.email, ...message });
   }
 
   async function sendResetCode(user) {
     const { code, record } = newVerification();
-    userStore.update(user.id, { passwordReset: record });
+    await userStore.update(user.id, { passwordReset: record });
     const message = passwordResetEmail(user.name, code);
     await mailer.send({ to: user.email, ...message });
   }
@@ -74,7 +75,7 @@ export function createAuthRouter({
   // Checks `code` against user[field] ("verification" or
   // "passwordReset"). Sends the error response and returns
   // false when it doesn't match.
-  function acceptCode(res, user, field, code) {
+  async function acceptCode(res, user, field, code) {
     const record = user[field];
     const result = checkCode(record, code);
     if (result === "ok") return true;
@@ -89,7 +90,7 @@ export function createAuthRouter({
       });
     } else {
       const attempts = record.attempts + 1;
-      userStore.update(user.id, {
+      await userStore.update(user.id, {
         [field]: { ...record, attempts }
       });
       const left = MAX_ATTEMPTS - attempts;
@@ -141,7 +142,7 @@ export function createAuthRouter({
         });
       }
 
-      const existing = userStore.findByEmail(email);
+      const existing = await userStore.findByEmail(email);
       if (existing && isEmailVerified(existing)) {
         return res.status(409).json({
           error:
@@ -154,7 +155,7 @@ export function createAuthRouter({
       if (existing) {
         // Signed up before but never verified: let them start
         // over with new details.
-        user = userStore.update(existing.id, {
+        user = await userStore.update(existing.id, {
           name: name.trim(),
           passwordHash
         });
@@ -162,14 +163,25 @@ export function createAuthRouter({
           return res.status(201).json({ email });
         }
       } else {
-        user = userStore.create({
-          id: crypto.randomUUID(),
-          name: name.trim(),
-          email,
-          role: "viewer",
-          passwordHash,
-          emailVerified: false
-        });
+        try {
+          user = await userStore.create({
+            id: crypto.randomUUID(),
+            name: name.trim(),
+            email,
+            role: "viewer",
+            passwordHash,
+            emailVerified: false
+          });
+        } catch (err) {
+          // Someone else signed up with this email a moment ago.
+          if (err instanceof DuplicateEmailError) {
+            return res.status(409).json({
+              error:
+                "An account with this email already exists. Sign in instead."
+            });
+          }
+          throw err;
+        }
       }
 
       try {
@@ -189,31 +201,36 @@ export function createAuthRouter({
 
   // POST /api/auth/verify  { email, code }
   // Marks the email verified and signs the user in.
-  router.post("/verify", (req, res, next) => {
-    const { email, code } = req.body ?? {};
-    const user = isString(email)
-      ? userStore.findByEmail(email)
-      : null;
+  router.post("/verify", async (req, res, next) => {
+    try {
+      const { email, code } = req.body ?? {};
+      const user = isString(email)
+        ? await userStore.findByEmail(email)
+        : null;
 
-    if (!user || !isString(code)) {
-      return res
-        .status(400)
-        .json({ error: "That code isn't right." });
-    }
-    if (isEmailVerified(user)) {
-      return res.status(400).json({
-        error:
-          "This email is already verified. Sign in instead."
+      if (!user || !isString(code)) {
+        return res
+          .status(400)
+          .json({ error: "That code isn't right." });
+      }
+      if (isEmailVerified(user)) {
+        return res.status(400).json({
+          error:
+            "This email is already verified. Sign in instead."
+        });
+      }
+
+      if (!(await acceptCode(res, user, "verification", code)))
+        return;
+
+      const verified = await userStore.update(user.id, {
+        emailVerified: true,
+        verification: undefined
       });
+      signInSession(req, res, next, verified);
+    } catch (err) {
+      next(err);
     }
-
-    if (!acceptCode(res, user, "verification", code)) return;
-
-    const verified = userStore.update(user.id, {
-      emailVerified: true,
-      verification: undefined
-    });
-    signInSession(req, res, next, verified);
   });
 
   // POST /api/auth/resend  { email }
@@ -221,7 +238,7 @@ export function createAuthRouter({
     try {
       const { email } = req.body ?? {};
       const user = isString(email)
-        ? userStore.findByEmail(email)
+        ? await userStore.findByEmail(email)
         : null;
 
       // Same answer whether or not the account exists.
@@ -254,7 +271,7 @@ export function createAuthRouter({
     try {
       const { email } = req.body ?? {};
       const user = isString(email)
-        ? userStore.findByEmail(email)
+        ? await userStore.findByEmail(email)
         : null;
       if (user && canResend(user.passwordReset)) {
         await sendResetCode(user);
@@ -280,16 +297,17 @@ export function createAuthRouter({
         });
       }
       const user = isString(email)
-        ? userStore.findByEmail(email)
+        ? await userStore.findByEmail(email)
         : null;
       if (!user || !user.passwordReset || !isString(code)) {
         return res.status(400).json({
           error: "That code isn't right. Send a new code."
         });
       }
-      if (!acceptCode(res, user, "passwordReset", code)) return;
+      if (!(await acceptCode(res, user, "passwordReset", code)))
+        return;
 
-      const updated = userStore.update(user.id, {
+      const updated = await userStore.update(user.id, {
         passwordHash: await bcrypt.hash(password, 10),
         passwordChangedAt: Date.now(),
         passwordReset: undefined,
@@ -318,7 +336,7 @@ export function createAuthRouter({
           .json({ error: "Enter your email and password." });
       }
 
-      const user = userStore.findByEmail(email);
+      const user = await userStore.findByEmail(email);
       const matches = await bcrypt.compare(
         password,
         user?.passwordHash ?? DUMMY_HASH
@@ -342,12 +360,18 @@ export function createAuthRouter({
   });
 
   // GET /api/auth/me -> who is signed in, or 401
-  router.get("/me", (req, res) => {
-    const user = sessionUser(req, userStore);
-    if (!user) {
-      return res.status(401).json({ error: "Not signed in." });
+  router.get("/me", async (req, res, next) => {
+    try {
+      const user = await sessionUser(req, userStore);
+      if (!user) {
+        return res
+          .status(401)
+          .json({ error: "Not signed in." });
+      }
+      res.json({ user: toPublicUser(user) });
+    } catch (err) {
+      next(err);
     }
-    res.json({ user: toPublicUser(user) });
   });
 
   // POST /api/auth/logout

@@ -10,8 +10,13 @@ import { sessionUser } from "./session.js";
 // The role is re-read from the user store on every request,
 // so a role change takes effect on the user's next request.
 export function requireRole(minimum, userStore) {
-  return (req, res, next) => {
-    const user = sessionUser(req, userStore);
+  return async (req, res, next) => {
+    let user;
+    try {
+      user = await sessionUser(req, userStore);
+    } catch (err) {
+      return next(err);
+    }
 
     if (!user) {
       return res

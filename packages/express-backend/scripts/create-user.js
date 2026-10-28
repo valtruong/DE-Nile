@@ -5,23 +5,13 @@
 //
 // You'll be asked for the password, so it never ends up in
 // your shell history. Roles: viewer, editor, admin.
-import path from "node:path";
 import readline from "node:readline";
 import crypto from "node:crypto";
-import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import bcrypt from "bcryptjs";
 import { ROLES, isValidRole } from "../src/auth/roles.js";
-import {
-  normalizeEmail,
-  readUsers,
-  writeUsers
-} from "../src/auth/userStore.js";
-
-const here = path.dirname(fileURLToPath(import.meta.url));
-const usersFile =
-  process.env.USERS_FILE ??
-  path.join(here, "..", "data", "users.json");
+import { normalizeEmail } from "../src/auth/userStore.js";
+import { openStoreForScript } from "./open-store.js";
 
 const { values } = parseArgs({
   options: {
@@ -77,20 +67,20 @@ if (password !== confirm) {
   process.exit(1);
 }
 
-const users = readUsers(usersFile);
+const { userStore, close } = await openStoreForScript();
 const passwordHash = await bcrypt.hash(password, 10);
-const existing = users.find(
-  (user) => normalizeEmail(user.email) === email
-);
+const existing = await userStore.findByEmail(email);
 
 if (existing) {
-  existing.name = values.name;
-  existing.role = values.role;
-  existing.passwordHash = passwordHash;
-  existing.emailVerified = true;
+  await userStore.update(existing.id, {
+    name: values.name,
+    role: values.role,
+    passwordHash,
+    emailVerified: true
+  });
   console.log(`Updated ${email} (${values.role}).`);
 } else {
-  users.push({
+  await userStore.create({
     id: crypto.randomUUID(),
     name: values.name,
     email,
@@ -101,4 +91,4 @@ if (existing) {
   console.log(`Created ${email} (${values.role}).`);
 }
 
-writeUsers(usersFile, users);
+await close();

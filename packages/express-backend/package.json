@@ -9,12 +9,16 @@
     "test": "vitest run",
     "lint": "eslint .",
     "create-user": "node scripts/create-user.js",
-    "set-role": "node scripts/set-role.js"
+    "set-role": "node scripts/set-role.js",
+    "import-users": "node scripts/import-users.js",
+    "delete-user": "node scripts/delete-user.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "dotenv": "^18.0.9",
     "express": "^5.3.0",
     "express-session": "^1.19.0",
+    "mongodb": "^7.7.0",
     "nodemailer": "^10.1.7"
   },
   "devDependencies": {

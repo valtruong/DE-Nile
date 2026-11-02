@@ -1,6 +1,6 @@
 import type { SymbolNode } from "./types";
 
-// Startup layout only: equipment IDs, labels, positions, and pipe styling live here.
+// Startup layout only: equipment IDs, labels, positions, and pipe styling live here
 const initialNodes: SymbolNode[] = [
   {
     id: "tank1",
@@ -98,7 +98,9 @@ const initialEdges = [
   {
     id: "gn2-line-1",
     source: "tank2",
+    sourceHandle: "top-source",
     target: "tank1",
+    targetHandle: "top-target",
     type: "step",
     pathOptions: { borderRadius: 0 },
     style: { stroke: "#667085", strokeWidth: 3 }
@@ -106,7 +108,9 @@ const initialEdges = [
   {
     id: "pt101-line",
     source: "tank1",
+    sourceHandle: "top-source",
     target: "pressure-transducer1",
+    targetHandle: "bottom-target",
     type: "step",
     pathOptions: { borderRadius: 0 },
     style: { stroke: "#667085", strokeWidth: 3 }
@@ -114,7 +118,9 @@ const initialEdges = [
   {
     id: "pt201-line",
     source: "pressure-transducer2",
+    sourceHandle: "bottom-source",
     target: "tank3",
+    targetHandle: "top-target",
     type: "step",
     pathOptions: { borderRadius: 0 },
     style: { stroke: "#667085", strokeWidth: 3 }
@@ -122,7 +128,9 @@ const initialEdges = [
   {
     id: "fuel-line-1",
     source: "tank1",
+    sourceHandle: "bottom-source",
     target: "check-valve1",
+    targetHandle: "left-target",
     type: "step",
     pathOptions: { borderRadius: 0 },
     style: { stroke: "#C44900", strokeWidth: 3 }
@@ -130,7 +138,9 @@ const initialEdges = [
   {
     id: "fuel-line-2",
     source: "check-valve1",
+    sourceHandle: "right-source",
     target: "pneumatic-valve1",
+    targetHandle: "left-target",
     type: "step",
     pathOptions: { borderRadius: 0 },
     style: { stroke: "#C44900", strokeWidth: 3 }
@@ -138,7 +148,9 @@ const initialEdges = [
   {
     id: "fuel-line-3",
     source: "pneumatic-valve1",
+    sourceHandle: "right-source",
     target: "engine",
+    targetHandle: "fuel-top-target",
     type: "step",
     pathOptions: { borderRadius: 0 },
     style: { stroke: "#C44900", strokeWidth: 3 }
@@ -146,7 +158,9 @@ const initialEdges = [
   {
     id: "oxidizer-line-1",
     source: "engine",
+    sourceHandle: "oxidizer-top-source",
     target: "pneumatic-valve2",
+    targetHandle: "left-target",
     type: "step",
     pathOptions: { borderRadius: 0 },
     style: { stroke: "#00A9D6", strokeWidth: 3 }
@@ -154,7 +168,9 @@ const initialEdges = [
   {
     id: "oxidizer-line-2",
     source: "pneumatic-valve2",
+    sourceHandle: "right-source",
     target: "check-valve2",
+    targetHandle: "left-target",
     type: "step",
     pathOptions: { borderRadius: 0 },
     style: { stroke: "#00A9D6", strokeWidth: 3 }
@@ -162,14 +178,16 @@ const initialEdges = [
   {
     id: "oxidizer-line-3",
     source: "check-valve2",
+    sourceHandle: "right-source",
     target: "tank3",
+    targetHandle: "bottom-target",
     type: "step",
     pathOptions: { borderRadius: 0 },
     style: { stroke: "#00A9D6", strokeWidth: 3 }
   }
 ];
 
-/** Give each canvas its own editable copy without changing the startup layout. */
+/** Give each canvas its own editable copy without changing the startup layout */
 export function createInitialDiagram() {
   return structuredClone({
     nodes: initialNodes,

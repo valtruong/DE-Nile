@@ -1,6 +1,5 @@
 import type { Node } from "@xyflow/react";
 
-// Preserve the editor's existing equipment names independently of its renderer.
 export type SymbolKind =
   | "checkValve"
   | "engine"
@@ -8,7 +7,21 @@ export type SymbolKind =
   | "pressureTransducer"
   | "tank";
 
-export type SymbolNode = Node<
-  { kind: SymbolKind; label: string },
-  "pidSymbol"
->;
+export type TankState = "full" | "half" | "empty";
+
+export type PneumaticValveState =
+  | "open"
+  | "closedPV1"
+  | "closedPV2";
+
+export type ComponentVisualState =
+  | TankState
+  | PneumaticValveState;
+
+export type SymbolNodeData = {
+  kind: SymbolKind;
+  label: string;
+  visualState?: ComponentVisualState;
+};
+
+export type SymbolNode = Node<SymbolNodeData, "pidSymbol">;

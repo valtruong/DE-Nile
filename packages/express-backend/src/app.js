@@ -1,14 +1,19 @@
+import path from "node:path";
 import express from "express";
 import session from "express-session";
+import { createAdminRouter } from "./auth/adminRoutes.js";
 import { createAuthRouter } from "./auth/authRoutes.js";
+import { createJsonInviteStore } from "./auth/inviteStore.js";
 import { createMailer } from "./auth/mailer.js";
 import { createJsonUserStore } from "./auth/userStore.js";
 
-// Pass `userStore` (see src/db.js), or `usersFile` for a
-// local JSON store (handy in tests).
+// Pass `userStore` and `inviteStore` (see src/db.js), or
+// `usersFile` for local JSON stores (handy in tests).
 export function createApp({
   userStore: givenStore,
+  inviteStore: givenInvites,
   usersFile,
+  appUrl = "http://localhost:5173",
   sessionSecret,
   mailer = createMailer(),
   allowedDomains = []
@@ -20,6 +25,14 @@ export function createApp({
   const app = express();
   const userStore =
     givenStore ?? createJsonUserStore(usersFile);
+  if (!givenInvites && !usersFile) {
+    throw new Error("createApp needs inviteStore or usersFile");
+  }
+  const inviteStore =
+    givenInvites ??
+    createJsonInviteStore(
+      path.join(path.dirname(usersFile), "invites.json")
+    );
 
   app.use(express.json());
   app.use(
@@ -39,7 +52,22 @@ export function createApp({
 
   app.use(
     "/api/auth",
-    createAuthRouter({ userStore, mailer, allowedDomains })
+    createAuthRouter({
+      userStore,
+      inviteStore,
+      mailer,
+      allowedDomains
+    })
+  );
+  app.use(
+    "/api/admin",
+    createAdminRouter({
+      userStore,
+      inviteStore,
+      mailer,
+      allowedDomains,
+      appUrl
+    })
   );
 
   app.get("/api/health", (req, res) => {
@@ -48,5 +76,6 @@ export function createApp({
 
   // Exposed so diagram routes can use requireRole later.
   app.locals.userStore = userStore;
+  app.locals.inviteStore = inviteStore;
   return app;
 }

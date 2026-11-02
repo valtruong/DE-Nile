@@ -2,6 +2,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { MongoClient } from "mongodb";
 import {
+  createJsonInviteStore,
+  createMongoInviteStore
+} from "./auth/inviteStore.js";
+import {
   createJsonUserStore,
   createMongoUserStore
 } from "./auth/userStore.js";
@@ -19,7 +23,7 @@ const DEFAULT_USERS_FILE = path.join(
 //   MONGODB_URI set  -> the shared team database
 //   otherwise        -> data/users.json on this laptop only
 //
-// Returns { userStore, close }.
+// Returns { userStore, inviteStore, where, close }.
 export async function openUserStore(env = process.env) {
   if (env.MONGODB_URI) {
     const client = new MongoClient(env.MONGODB_URI, {
@@ -36,6 +40,7 @@ export async function openUserStore(env = process.env) {
     const db = client.db(env.MONGODB_DB ?? "denile");
     return {
       userStore: await createMongoUserStore(db),
+      inviteStore: await createMongoInviteStore(db),
       where: `MongoDB database "${db.databaseName}"`,
       close: () => client.close()
     };
@@ -44,6 +49,9 @@ export async function openUserStore(env = process.env) {
   const usersFile = env.USERS_FILE ?? DEFAULT_USERS_FILE;
   return {
     userStore: createJsonUserStore(usersFile),
+    inviteStore: createJsonInviteStore(
+      path.join(path.dirname(usersFile), "invites.json")
+    ),
     where: `${usersFile} (this laptop only; set MONGODB_URI to share accounts)`,
     close: async () => {}
   };

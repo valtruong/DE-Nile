@@ -78,3 +78,72 @@
 .app-header-signout:hover {
   color: #fff;
 }
+
+.app-header-nav {
+  display: flex;
+  gap: 4px;
+  margin-left: 16px;
+  align-self: center;
+}
+
+.app-header-nav button {
+  background: none;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  color: #d1d5db;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.app-header-nav button:hover {
+  color: #fff;
+  background: #1f2937;
+}
+
+.app-header-nav button[aria-current="page"] {
+  color: #fff;
+  background: #374151;
+}
+
+.app-header-nav button:focus-visible {
+  outline: 2px solid #a5b4fc;
+  outline-offset: 1px;
+}
+
+/* Phones: brand + account on one row, page tabs below. */
+@media (max-width: 640px) {
+  .app-header {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 58px;
+    padding: 10px 16px;
+    row-gap: 8px;
+  }
+
+  .app-header-title {
+    display: contents;
+  }
+
+  .app-header-brand {
+    order: 1;
+  }
+
+  .app-header-sep,
+  .app-header-window {
+    display: none;
+  }
+
+  .app-header-right {
+    order: 2;
+    margin-left: auto;
+  }
+
+  .app-header-nav {
+    order: 3;
+    flex-basis: 100%;
+    margin-left: -12px;
+  }
+}

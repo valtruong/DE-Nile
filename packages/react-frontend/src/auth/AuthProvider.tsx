@@ -75,6 +75,15 @@ export function AuthProvider({
     setSession({ status: "guest" });
   }, []);
 
+  const refreshUser = useCallback(async () => {
+    const user = await api.fetchCurrentUser();
+    setSession(
+      user
+        ? { status: "signedIn", user }
+        : { status: "signedOut" }
+    );
+  }, []);
+
   const signOut = useCallback(async () => {
     try {
       await api.signOut();
@@ -94,6 +103,7 @@ export function AuthProvider({
       verifyEmail,
       resetPassword,
       continueAsViewer,
+      refreshUser,
       signOut
     };
   }, [
@@ -102,6 +112,7 @@ export function AuthProvider({
     verifyEmail,
     resetPassword,
     continueAsViewer,
+    refreshUser,
     signOut
   ]);
 

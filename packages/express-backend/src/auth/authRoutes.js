@@ -47,6 +47,7 @@ function signInSession(req, res, next, user) {
 
 export function createAuthRouter({
   userStore,
+  inviteStore,
   mailer,
   allowedDomains = []
 }) {
@@ -63,6 +64,20 @@ export function createAuthRouter({
     await userStore.update(user.id, { verification: record });
     const message = verificationEmail(user.name, code);
     await mailer.send({ to: user.email, ...message });
+  }
+
+  // If an admin invited this email, give the user the invited
+  // role now that they've proven they own the inbox.
+  async function applyInvite(user) {
+    const invite = inviteStore
+      ? await inviteStore.find(user.email)
+      : null;
+    if (!invite) return user;
+    const updated = await userStore.update(user.id, {
+      role: invite.role
+    });
+    await inviteStore.remove(user.email);
+    return updated;
   }
 
   async function sendResetCode(user) {
@@ -227,7 +242,12 @@ export function createAuthRouter({
         emailVerified: true,
         verification: undefined
       });
-      signInSession(req, res, next, verified);
+      signInSession(
+        req,
+        res,
+        next,
+        await applyInvite(verified)
+      );
     } catch (err) {
       next(err);
     }
@@ -307,7 +327,8 @@ export function createAuthRouter({
       if (!(await acceptCode(res, user, "passwordReset", code)))
         return;
 
-      const updated = await userStore.update(user.id, {
+      const wasVerified = isEmailVerified(user);
+      let updated = await userStore.update(user.id, {
         passwordHash: await bcrypt.hash(password, 10),
         passwordChangedAt: Date.now(),
         passwordReset: undefined,
@@ -315,6 +336,7 @@ export function createAuthRouter({
         emailVerified: true,
         verification: undefined
       });
+      if (!wasVerified) updated = await applyInvite(updated);
       signInSession(req, res, next, updated);
     } catch (err) {
       next(err);

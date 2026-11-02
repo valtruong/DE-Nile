@@ -47,6 +47,9 @@ try {
 const mailer = createMailer();
 const app = createApp({
   userStore: store.userStore,
+  inviteStore: store.inviteStore,
+  // Where invite emails point people to sign up.
+  appUrl: process.env.APP_URL ?? "http://localhost:5173",
   sessionSecret,
   mailer,
   allowedDomains

@@ -12,6 +12,7 @@ import {
   it
 } from "vitest";
 import { createApp } from "../src/app.js";
+import { createMongoInviteStore } from "../src/auth/inviteStore.js";
 import {
   DuplicateEmailError,
   createMongoUserStore
@@ -27,15 +28,14 @@ describe.skipIf(!URI)("shared MongoDB accounts", () => {
 
   // Two separate backends (say, Stella's and Valerie's
   // laptops) pointed at the same database.
-  function laptop() {
-    return createMongoUserStore(db).then((userStore) =>
-      createApp({
-        userStore,
-        sessionSecret: "test",
-        allowedDomains: ["calpoly.edu"],
-        mailer: { send: async (mail) => sent.push(mail) }
-      })
-    );
+  async function laptop() {
+    return createApp({
+      userStore: await createMongoUserStore(db),
+      inviteStore: await createMongoInviteStore(db),
+      sessionSecret: "test",
+      allowedDomains: ["calpoly.edu"],
+      mailer: { send: async (mail) => sent.push(mail) }
+    });
   }
 
   function lastCode() {
@@ -161,6 +161,52 @@ describe.skipIf(!URI)("shared MongoDB accounts", () => {
       .send({ email: "evu@calpoly.edu", password: PASSWORD })
       .expect(200)
       .then((res) => expect(res.body.user.role).toBe("editor"));
+  });
+
+  it("an invite sent from one laptop applies on another", async () => {
+    const userStore = await createMongoUserStore(db);
+    await userStore.create({
+      id: "u-mongo-admin",
+      name: "Stella Daoud",
+      email: "sdaoud-admin@calpoly.edu",
+      role: "admin",
+      passwordHash: await import("bcryptjs").then((b) =>
+        b.default.hash(PASSWORD, 4)
+      )
+    });
+    const stella = await laptop();
+    const valerie = await laptop();
+
+    const admin = request.agent(stella);
+    await admin
+      .post("/api/auth/login")
+      .send({
+        email: "sdaoud-admin@calpoly.edu",
+        password: PASSWORD
+      })
+      .expect(200);
+    await admin
+      .post("/api/admin/invites")
+      .send({ email: "invitee@calpoly.edu", role: "editor" })
+      .expect(201);
+
+    await request(valerie)
+      .post("/api/auth/signup")
+      .send({
+        name: "Invitee",
+        email: "invitee@calpoly.edu",
+        password: PASSWORD
+      })
+      .expect(201);
+    const res = await request(valerie)
+      .post("/api/auth/verify")
+      .send({ email: "invitee@calpoly.edu", code: lastCode() })
+      .expect(200);
+    expect(res.body.user.role).toBe("editor");
+    const left = await admin
+      .get("/api/admin/invites")
+      .expect(200);
+    expect(left.body.invites).toEqual([]);
   });
 
   it("password reset works across laptops", async () => {

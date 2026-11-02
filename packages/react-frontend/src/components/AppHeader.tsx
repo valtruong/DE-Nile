@@ -1,8 +1,16 @@
 import { useAuth } from "../auth/AuthContext";
-import { ROLE_BADGE, initials } from "../auth/roles";
+import { ROLE_BADGE, initials, isAdmin } from "../auth/roles";
 import "./AppHeader.css";
 
-export function AppHeader() {
+export type Page = "diagram" | "users";
+
+export function AppHeader({
+  page,
+  onNavigate
+}: {
+  page: Page;
+  onNavigate: (page: Page) => void;
+}) {
   const { session, role, signOut } = useAuth();
   if (!role) return null;
 
@@ -19,6 +27,26 @@ export function AppHeader() {
         <span className="app-header-window">
           P&amp;ID window · DE-Nile
         </span>
+        {isAdmin(role) && (
+          <nav className="app-header-nav" aria-label="Pages">
+            <button
+              type="button"
+              aria-current={
+                page === "diagram" ? "page" : undefined
+              }
+              onClick={() => onNavigate("diagram")}>
+              Diagram
+            </button>
+            <button
+              type="button"
+              aria-current={
+                page === "users" ? "page" : undefined
+              }
+              onClick={() => onNavigate("users")}>
+              Users &amp; roles
+            </button>
+          </nav>
+        )}
       </div>
       <div className="app-header-right">
         <span

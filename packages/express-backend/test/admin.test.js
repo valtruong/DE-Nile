@@ -330,3 +330,77 @@ describe("invites", () => {
     expect(list.body.invites).toHaveLength(1);
   });
 });
+
+describe("DELETE /api/admin/users/:id", () => {
+  it("removes the account and signs them out", async () => {
+    const viewer = await signedIn("viewer@calpoly.edu");
+    const admin = await signedIn("admin@calpoly.edu");
+
+    const res = await admin.delete("/api/admin/users/u-viewer");
+    expect(res.status).toBe(204);
+
+    const list = await admin.get("/api/admin/users");
+    expect(list.body.users.map((u) => u.id)).not.toContain(
+      "u-viewer"
+    );
+    expect((await viewer.get("/api/auth/me")).status).toBe(401);
+    const login = await request(app)
+      .post("/api/auth/login")
+      .send({
+        email: "viewer@calpoly.edu",
+        password: PASSWORD
+      });
+    expect(login.status).toBe(401);
+  });
+
+  it("drops a pending invite for that email too", async () => {
+    const admin = await signedIn("admin@calpoly.edu");
+    await request(app).post("/api/auth/signup").send({
+      name: "Half Done",
+      email: "half@calpoly.edu",
+      password: PASSWORD
+    });
+    await admin
+      .post("/api/admin/invites")
+      .send({ email: "half@calpoly.edu", role: "admin" });
+    const { users } = (await admin.get("/api/admin/users"))
+      .body;
+    const half = users.find(
+      (u) => u.email === "half@calpoly.edu"
+    );
+
+    await admin
+      .delete(`/api/admin/users/${half.id}`)
+      .expect(204);
+    const invites = await admin.get("/api/admin/invites");
+    expect(invites.body.invites).toEqual([]);
+  });
+
+  it("won't let an admin remove themselves", async () => {
+    const admin = await signedIn("admin@calpoly.edu");
+    const res = await admin.delete("/api/admin/users/u-admin");
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe("CANNOT_REMOVE_SELF");
+  });
+
+  it("lets one admin remove another", async () => {
+    const admin = await signedIn("admin@calpoly.edu");
+    await admin
+      .patch("/api/admin/users/u-editor")
+      .send({ role: "admin" });
+    expect(
+      (await admin.delete("/api/admin/users/u-editor")).status
+    ).toBe(204);
+  });
+
+  it("answers 404 for unknown ids and 403 for non-admins", async () => {
+    const admin = await signedIn("admin@calpoly.edu");
+    expect(
+      (await admin.delete("/api/admin/users/nope")).status
+    ).toBe(404);
+    const editor = await signedIn("editor@calpoly.edu");
+    expect(
+      (await editor.delete("/api/admin/users/u-viewer")).status
+    ).toBe(403);
+  });
+});

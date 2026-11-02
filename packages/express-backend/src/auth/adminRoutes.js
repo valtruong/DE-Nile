@@ -85,6 +85,41 @@ export function createAdminRouter({
     }
   });
 
+  // DELETE /api/admin/users/:id
+  // Removes the account (and any pending invite for its
+  // email). They're signed out on their next request and can
+  // sign up again as an operator.
+  router.delete("/users/:id", async (req, res, next) => {
+    try {
+      if (req.params.id === req.user.id) {
+        return res.status(409).json({
+          error: "You can't remove your own account here.",
+          code: "CANNOT_REMOVE_SELF"
+        });
+      }
+      const target = await userStore.findById(req.params.id);
+      if (!target) {
+        return res
+          .status(404)
+          .json({ error: "No such account." });
+      }
+      if (
+        target.role === "admin" &&
+        (await adminCount()) === 1
+      ) {
+        return res.status(409).json({
+          error: "This is the only admin.",
+          code: "LAST_ADMIN"
+        });
+      }
+      await userStore.delete(target.id);
+      await inviteStore.remove(target.email);
+      res.status(204).end();
+    } catch (err) {
+      next(err);
+    }
+  });
+
   // GET /api/admin/invites -> { invites: [...] }
   router.get("/invites", async (req, res, next) => {
     try {

@@ -69,6 +69,14 @@ export async function changeRole(
   return body.user;
 }
 
+// Deletes the account. Admins can't remove themselves.
+export async function removeUser(id: string): Promise<void> {
+  await call<null>(
+    "DELETE",
+    `/api/admin/users/${encodeURIComponent(id)}`
+  );
+}
+
 export async function listInvites(): Promise<Invite[]> {
   const body = await call<{ invites: Invite[] }>(
     "GET",

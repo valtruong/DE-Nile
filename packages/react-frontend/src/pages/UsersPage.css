@@ -232,6 +232,36 @@
   color: var(--text);
 }
 
+.users-danger {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--danger);
+  border: 1px solid var(--danger);
+  color: #fff;
+}
+
+.users-danger:hover:not(:disabled) {
+  background: #991b1b;
+}
+
+.users-danger:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.users-danger:focus-visible {
+  outline: 2px solid var(--danger);
+  outline-offset: 2px;
+}
+
+.users-actions .users-link + .users-link {
+  margin-left: 16px;
+}
+
 .users-secondary:hover {
   background: #f9fafb;
 }

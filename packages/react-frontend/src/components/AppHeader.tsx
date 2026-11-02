@@ -43,7 +43,7 @@ export function AppHeader({
                 page === "users" ? "page" : undefined
               }
               onClick={() => onNavigate("users")}>
-              Users &amp; roles
+              Users &amp; Roles
             </button>
           </nav>
         )}

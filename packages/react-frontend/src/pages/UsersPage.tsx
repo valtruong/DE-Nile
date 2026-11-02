@@ -18,7 +18,7 @@ import {
 } from "../auth/roles";
 import "./UsersPage.css";
 
-// Storyboard: admin "Users & roles" screen. Admins see every
+// Storyboard: admin "Users & Roles" screen. Admins see every
 // account, change roles and invite people. The server checks
 // the admin role on every request; this page is just the UI.
 
@@ -26,6 +26,7 @@ type Dialog =
   | { kind: "none" }
   | { kind: "changeRole"; user: AdminUser }
   | { kind: "onlyAdmin" }
+  | { kind: "remove"; user: AdminUser }
   | { kind: "invite" };
 
 // "an operator", "an editor", "an admin"
@@ -104,6 +105,17 @@ export function UsersPage() {
     if (updated.id === me?.id) await refreshUser();
   }
 
+  function handleRemoved(user: AdminUser) {
+    setDialog({ kind: "none" });
+    setUsers(
+      (list) => list?.filter((u) => u.id !== user.id) ?? null
+    );
+    setInvites((list) =>
+      list.filter((i) => i.email !== user.email)
+    );
+    setNotice(`${user.name}'s account was removed.`);
+  }
+
   async function handleRevoke(email: string) {
     setNotice(null);
     try {
@@ -121,7 +133,7 @@ export function UsersPage() {
     <main className="users">
       <div className="users-head">
         <div>
-          <h1 className="users-title">Users &amp; roles</h1>
+          <h1 className="users-title">Users &amp; Roles</h1>
           <p className="users-subtitle">
             Who can watch, edit and manage DE-Nile.
           </p>
@@ -222,6 +234,18 @@ export function UsersPage() {
                         onClick={() => openChangeRole(user)}>
                         Change role
                       </button>
+                      {user.id !== me?.id && (
+                        <button
+                          type="button"
+                          className="users-link users-link-danger"
+                          aria-label={`Remove ${user.name}`}
+                          onClick={() => {
+                            setNotice(null);
+                            setDialog({ kind: "remove", user });
+                          }}>
+                          Remove
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -292,6 +316,13 @@ export function UsersPage() {
           onClose={() => setDialog({ kind: "none" })}
           onChanged={handleRoleChanged}
           onOnlyAdmin={() => setDialog({ kind: "onlyAdmin" })}
+        />
+      )}
+      {dialog.kind === "remove" && (
+        <RemoveDialog
+          user={dialog.user}
+          onClose={() => setDialog({ kind: "none" })}
+          onRemoved={handleRemoved}
         />
       )}
       {dialog.kind === "onlyAdmin" && (
@@ -489,6 +520,62 @@ function ChangeRoleDialog({
           </button>
         </div>
       </form>
+    </Modal>
+  );
+}
+
+function RemoveDialog({
+  user,
+  onClose,
+  onRemoved
+}: {
+  user: AdminUser;
+  onClose: () => void;
+  onRemoved: (user: AdminUser) => void;
+}) {
+  const [error, setError] = useState<string | null>(null);
+  const [removing, setRemoving] = useState(false);
+
+  async function handleRemove() {
+    setError(null);
+    setRemoving(true);
+    try {
+      await admin.removeUser(user.id);
+      onRemoved(user);
+    } catch (err) {
+      setError(errorText(err));
+      setRemoving(false);
+    }
+  }
+
+  return (
+    <Modal title={`Remove ${user.name}?`} onClose={onClose}>
+      <p className="modal-text">
+        This deletes the account for{" "}
+        <strong>{user.email}</strong>. They'll be signed out
+        right away. They can sign up again later, but will start
+        as an operator.
+      </p>
+      {error && (
+        <p className="modal-error" role="alert">
+          {error}
+        </p>
+      )}
+      <div className="modal-buttons">
+        <button
+          type="button"
+          className="users-secondary"
+          onClick={onClose}>
+          Cancel
+        </button>
+        <button
+          type="button"
+          className="users-danger"
+          disabled={removing}
+          onClick={() => void handleRemove()}>
+          {removing ? "Removing…" : "Remove account"}
+        </button>
+      </div>
     </Modal>
   );
 }

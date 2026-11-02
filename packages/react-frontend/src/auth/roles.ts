@@ -39,7 +39,7 @@ export function isAdmin(role: Role | null): boolean {
   return role === "admin";
 }
 
-// What each role can do, shown on the Users & roles page.
+// What each role can do, shown on the Users & Roles page.
 // The storyboard calls the read-only role "Operator"; the
 // stored value stays "viewer".
 export const ROLE_INFO: Record<

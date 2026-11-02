@@ -2,7 +2,7 @@
 
 Express server for DE-Nile. Right now it handles sign-in,
 account creation, email verification and roles (issue #25), and
-the admin's Users & roles page (issue #13); diagram and
+the admin's Users & Roles page (issue #13); diagram and
 telemetry routes come later. Accounts are shared by the whole
 team through one MongoDB Atlas database.
 
@@ -94,7 +94,7 @@ twice.
 
 | Role   | Can do                                                                                                         |
 | ------ | -------------------------------------------------------------------------------------------------------------- |
-| viewer | Watch live diagrams. No account needed: "Continue as viewer". Shown as **Operator** on the Users & roles page. |
+| viewer | Watch live diagrams. No account needed: "Continue as viewer". Shown as **Operator** on the Users & Roles page. |
 | editor | Everything a viewer can, plus move, connect, delete and save diagrams.                                         |
 | admin  | Everything an editor can, plus invite people and change roles.                                                 |
 
@@ -104,12 +104,15 @@ click "Create an account" on the sign-in page. We email them a
 minute), and they can't sign in until they enter it. New
 accounts are **viewers** unless an admin invited them.
 
-**Users & roles (admins).** Admins get a "Users & roles" tab in
+**Users & Roles (admins).** Admins get a "Users & Roles" tab in
 the header. From there they can:
 
 - **Change role** for anyone. It takes effect on that person's
   next page load. The last admin can't demote themselves
   ("You're the only admin"); promote someone else first.
+- **Remove** someone's account (it asks first). They're signed
+  out right away and can sign up again later as an operator. You
+  can't remove yourself.
 - **+ Invite member**: enter an email and a role. They get an
   email with a link to `APP_URL`. When they create an account
   with that address and verify it, they get the invited role
@@ -185,6 +188,7 @@ Admin only (401 signed out, 403 for viewers/editors):
 | PATCH  | `/api/admin/users/:id`      | `{ role }` → `{ user }`; 409 `LAST_ADMIN` for the last one |
 | GET    | `/api/admin/invites`        | `{ invites }`                                              |
 | POST   | `/api/admin/invites`        | `{ email, role }` → 201, emails an invite                  |
+| DELETE | `/api/admin/users/:id`      | 204; 409 `CANNOT_REMOVE_SELF` for yourself                 |
 | DELETE | `/api/admin/invites/:email` | 204                                                        |
 
 To make a future route editor-only:

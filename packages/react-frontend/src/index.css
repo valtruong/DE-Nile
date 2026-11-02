@@ -42,3 +42,9 @@ button,
 input {
   font: inherit;
 }
+
+.react-flow__node .denile-symbol {
+  background: transparent !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}

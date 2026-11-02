@@ -47,12 +47,34 @@
   white-space: pre-wrap;
   padding: 16px;
 }
-
-/* The team's white-stroke SVG artwork needs a dark backing in a light host panel. */
+.denile-theme {
+  --pid-stroke: #111827;
+  --pid-surface: #ffffff;
+  --pid-muted: #6b7280;
+  --pid-tank-fluid: #8299ff;
+  --pid-valve-open: #a5c200;
+  --pid-valve-closed: #c20d00;
+}
+.denile-theme--dark {
+  --pid-stroke: #f8fafc;
+  --pid-surface: #12151b;
+  --pid-muted: #9ca3af;
+}
+.denile-theme--light {
+  --pid-stroke: #111827;
+  --pid-surface: #ffffff;
+  --pid-muted: #6b7280;
+}
 .denile-symbol {
   display: block;
-  object-fit: contain;
-  background: #12151b;
-  border-radius: 4px;
-  padding: 6px;
+  width: 90px;
+  height: 90px;
+}
+.denile-symbol svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.denile-symbol svg [stroke] {
+  vector-effect: non-scaling-stroke;
 }

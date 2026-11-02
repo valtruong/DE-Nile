@@ -1,0 +1,28 @@
+<svg
+  width="33"
+  height="70"
+  viewBox="0 0 33 70"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <circle
+    cx="16.5"
+    cy="2.5"
+    r="2.5"
+    fill="var(--pid-stroke)"
+  />
+
+  <path
+    d="M16.5 5.75C25.1985 5.75 32.25 12.8015 32.25 21.5V48.5C32.25 57.1985 25.1985 64.25 16.5 64.25C7.80152 64.25 0.75 57.1985 0.75 48.5V21.5C0.75 12.8015 7.80152 5.75 16.5 5.75Z"
+    fill="var(--pid-tank-fluid)"
+    stroke="var(--pid-stroke)"
+    stroke-width="1.5"
+  />
+
+  <circle
+    cx="16.5"
+    cy="67.5"
+    r="2.5"
+    fill="var(--pid-stroke)"
+  />
+</svg>

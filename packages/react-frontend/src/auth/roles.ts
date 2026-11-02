@@ -34,3 +34,31 @@ export function initials(name: string): string {
       : (parts[0] ?? "?").slice(0, 2);
   return letters.toUpperCase();
 }
+
+export function isAdmin(role: Role | null): boolean {
+  return role === "admin";
+}
+
+// What each role can do, shown on the Users & Roles page.
+// The storyboard calls the read-only role "Operator"; the
+// stored value stays "viewer".
+export const ROLE_INFO: Record<
+  Role,
+  { label: string; summary: string }
+> = {
+  viewer: {
+    label: "Operator",
+    summary: "Watch live diagrams. Can't edit anything."
+  },
+  editor: {
+    label: "Editor",
+    summary: "Build, import, export and save diagrams."
+  },
+  admin: {
+    label: "Admin",
+    summary:
+      "Everything editors can do, plus manage people and roles."
+  }
+};
+
+export const ROLES: Role[] = ["viewer", "editor", "admin"];

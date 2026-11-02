@@ -4,24 +4,30 @@
 //   npm run delete-user -- --email you@calpoly.edu
 //
 // You'll be asked to type the email again to confirm.
-// Refuses to delete the only admin.
+// Refuses to delete the only admin unless you add --force
+// (handy for re-running a sign-up demo; afterwards make
+// someone admin again with `npm run set-role`).
 import readline from "node:readline/promises";
 import { parseArgs } from "node:util";
 import { normalizeEmail } from "../src/auth/userStore.js";
 import { openStoreForScript } from "./open-store.js";
 
 const { values } = parseArgs({
-  options: { email: { type: "string" } }
+  options: {
+    email: { type: "string" },
+    force: { type: "boolean", default: false }
+  }
 });
 const email = normalizeEmail(values.email);
 if (!email) {
   console.error(
-    "Usage: npm run delete-user -- --email you@calpoly.edu"
+    "Usage: npm run delete-user -- --email you@calpoly.edu [--force]"
   );
   process.exit(1);
 }
 
-const { userStore, close } = await openStoreForScript();
+const { userStore, inviteStore, close } =
+  await openStoreForScript();
 const user = await userStore.findByEmail(email);
 if (!user) {
   console.error(`No account for ${email}.`);
@@ -33,12 +39,17 @@ if (user.role === "admin") {
   const admins = (await userStore.list()).filter(
     (u) => u.role === "admin"
   );
-  if (admins.length === 1) {
+  if (admins.length === 1 && !values.force) {
     console.error(
-      "That's the only admin. Make someone else an admin first."
+      "That's the only admin. Make someone else an admin first, or add --force to delete it anyway."
     );
     await close();
     process.exit(1);
+  }
+  if (admins.length === 1) {
+    console.log(
+      "Warning: this is the only admin. Nobody will be able to manage roles until you run set-role again."
+    );
   }
 }
 
@@ -61,5 +72,6 @@ if (normalizeEmail(answer) !== email) {
 }
 
 await userStore.delete(user.id);
+await inviteStore?.remove(email);
 console.log(`Deleted ${email}. They can sign up again.`);
 await close();

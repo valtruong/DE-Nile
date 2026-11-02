@@ -81,3 +81,25 @@ export function passwordResetEmail(name, code) {
     ].join("\n")
   };
 }
+
+const ROLE_WORDS = {
+  viewer: "an operator (watch live diagrams)",
+  editor: "an editor (build, import, export and save diagrams)",
+  admin: "an admin (edit diagrams and manage people)"
+};
+
+export function inviteEmail(inviterName, role, appUrl) {
+  return {
+    subject: `${inviterName} invited you to DE-Nile`,
+    text: [
+      "Hi,",
+      "",
+      `${inviterName} invited you to DE-Nile, the P&ID viewer and editor for NILE test stands, as ${ROLE_WORDS[role] ?? role}.`,
+      "",
+      `Create your account with this email address at ${appUrl}`,
+      "Your access is applied automatically once you verify your email.",
+      "",
+      "If you weren't expecting this, you can ignore it."
+    ].join("\n")
+  };
+}

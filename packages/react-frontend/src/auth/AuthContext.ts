@@ -22,6 +22,9 @@ export type AuthValue = {
     password: string
   ) => Promise<void>;
   continueAsViewer: () => void;
+  // Re-read the signed-in user (e.g. after changing your own
+  // role on the Users page).
+  refreshUser: () => Promise<void>;
   signOut: () => Promise<void>;
 };
 

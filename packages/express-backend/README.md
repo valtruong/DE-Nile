@@ -1,9 +1,10 @@
 # DE-Nile backend
 
 Express server for DE-Nile. Right now it handles sign-in,
-account creation, email verification and roles (issue #25);
-diagram and telemetry routes come later. Accounts are shared by
-the whole team through one MongoDB Atlas database.
+account creation, email verification and roles (issue #25), and
+the admin's Users & Roles page (issue #13); diagram and
+telemetry routes come later. Accounts are shared by the whole
+team through one MongoDB Atlas database.
 
 ## Run it
 
@@ -91,21 +92,41 @@ twice.
 
 ## Accounts and roles
 
-| Role   | Can do                                                                 |
-| ------ | ---------------------------------------------------------------------- |
-| viewer | Watch live diagrams. No account needed: "Continue as viewer".          |
-| editor | Everything a viewer can, plus move, connect, delete and save diagrams. |
-| admin  | Everything an editor can, plus manage people and roles (later).        |
+| Role   | Can do                                                                                                         |
+| ------ | -------------------------------------------------------------------------------------------------------------- |
+| viewer | Watch live diagrams. No account needed: "Continue as viewer". Shown as **Operator** on the Users & Roles page. |
+| editor | Everything a viewer can, plus move, connect, delete and save diagrams.                                         |
+| admin  | Everything an editor can, plus invite people and change roles.                                                 |
 
 **Creating an account.** Anyone with a `@calpoly.edu` email can
 click "Create an account" on the sign-in page. We email them a
 6-digit code (valid 15 minutes, 5 tries, one new code per
 minute), and they can't sign in until they enter it. New
-accounts are always **viewers**. To give someone editor access:
+accounts are **viewers** unless an admin invited them.
+
+**Users & Roles (admins).** Admins get a "Users & Roles" tab in
+the header. From there they can:
+
+- **Change role** for anyone. It takes effect on that person's
+  next page load. The last admin can't demote themselves
+  ("You're the only admin"); promote someone else first.
+- **Remove** someone's account (it asks first). They're signed
+  out right away and can sign up again later as an operator. You
+  can't remove yourself.
+- **+ Invite member**: enter an email and a role. They get an
+  email with a link to `APP_URL`. When they create an account
+  with that address and verify it, they get the invited role
+  automatically. Pending invites can be revoked.
+
+**The first admin.** Someone has to be made admin from the
+command line once (after they've signed up and verified):
 
 ```bash
-npm run set-role -- --email teammate@calpoly.edu --role editor
+npm run set-role -- --email you@calpoly.edu --role admin
 ```
+
+`set-role` also works for any other role change if you'd rather
+not use the page.
 
 **Forgot password.** "Forgot password?" on the sign-in page
 emails a 6-digit reset code (same limits as above). Entering it
@@ -120,14 +141,24 @@ npm run delete-user -- --email you@calpoly.edu
 ```
 
 It asks you to type the email again, and won't delete the only
-admin.
+admin unless you add `--force`.
+
+**Re-running the sign-up demo.** To show sign-up, the
+verification email and becoming admin again from scratch:
+
+```bash
+npm run delete-user -- --email you@calpoly.edu --force
+# sign up again on the site and enter the emailed code
+npm run set-role -- --email you@calpoly.edu --role admin
+# refresh the page: the ADMIN badge and Users & Roles tab appear
+```
 
 `npm run create-user` still works for adding an account directly
 (it's marked verified, and you pick the role).
 
-- Accounts live in the shared MongoDB database (or
-  `data/users.json` if `MONGODB_URI` isn't set). Passwords and
-  codes are stored only as hashes.
+- Accounts and invites live in the shared MongoDB database (or
+  `data/users.json` and `data/invites.json` if `MONGODB_URI`
+  isn't set). Passwords and codes are stored only as hashes.
 - Sessions use an httpOnly cookie. Set `SESSION_SECRET` in any
   shared or deployed environment.
 
@@ -140,7 +171,11 @@ why teammates couldn't get codes before.
 
 `ALLOWED_EMAIL_DOMAINS` controls who can sign up
 (comma-separated, default `calpoly.edu`; set it to an empty
-string to allow any email).
+string to allow any email). Invites follow the same rule.
+
+`APP_URL` is the link put in invite emails (default
+`http://localhost:5173`). Change it once DE-Nile is hosted
+somewhere.
 
 ## API
 
@@ -154,6 +189,17 @@ string to allow any email).
 | POST   | `/api/auth/reset`  | `{ email, code, password }` → `{ user }`, signed in |
 | GET    | `/api/auth/me`     | `{ user }` if signed in, otherwise 401              |
 | POST   | `/api/auth/logout` | 204                                                 |
+
+Admin only (401 signed out, 403 for viewers/editors):
+
+| Method | Route                       | Result                                                     |
+| ------ | --------------------------- | ---------------------------------------------------------- |
+| GET    | `/api/admin/users`          | `{ users }` (no password hashes)                           |
+| PATCH  | `/api/admin/users/:id`      | `{ role }` → `{ user }`; 409 `LAST_ADMIN` for the last one |
+| GET    | `/api/admin/invites`        | `{ invites }`                                              |
+| POST   | `/api/admin/invites`        | `{ email, role }` → 201, emails an invite                  |
+| DELETE | `/api/admin/users/:id`      | 204; 409 `CANNOT_REMOVE_SELF` for yourself                 |
+| DELETE | `/api/admin/invites/:email` | 204                                                        |
 
 To make a future route editor-only:
 

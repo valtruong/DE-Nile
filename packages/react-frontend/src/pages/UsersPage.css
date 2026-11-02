@@ -1,0 +1,498 @@
+.users {
+  flex: 1;
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 32px 24px 48px;
+}
+
+.users-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.users-title {
+  font-family: var(--mono);
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0 0 2px;
+}
+
+.users-subtitle {
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.users-notice {
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  color: #312e81;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 0 0 16px;
+  font-size: 14px;
+}
+
+.users-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .users-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.users-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.users-empty {
+  padding: 32px 20px;
+  color: var(--text-muted);
+  text-align: center;
+  margin: 0;
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.users-table th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  background: #f9fafb;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.users-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.users-table tr:last-child td {
+  border-bottom: none;
+}
+
+.users-person {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.users-avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.users-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.users-you {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.users-email {
+  color: var(--text-muted);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.users-role {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.users-role-viewer {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.users-role-editor {
+  background: #e0e7ff;
+  color: var(--primary);
+}
+
+.users-role-admin {
+  background: #312e81;
+  color: #fff;
+}
+
+.users-status {
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.users-status::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #16a34a;
+  margin-right: 6px;
+  vertical-align: 1px;
+}
+
+.users-status-pending {
+  color: var(--text-muted);
+}
+
+.users-status-pending::before {
+  background: #d97706;
+}
+
+.users-actions {
+  text-align: right;
+}
+
+.users-link {
+  background: none;
+  border: none;
+  padding: 4px 0;
+  color: var(--primary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.users-link:hover {
+  text-decoration: underline;
+}
+
+.users-link-danger {
+  color: var(--danger);
+}
+
+.users-primary,
+.users-secondary {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.users-primary {
+  background: var(--primary);
+  border: 1px solid var(--primary);
+  color: #fff;
+}
+
+.users-primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.users-primary:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.users-secondary {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+}
+
+.users-danger {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--danger);
+  border: 1px solid var(--danger);
+  color: #fff;
+}
+
+.users-danger:hover:not(:disabled) {
+  background: #991b1b;
+}
+
+.users-danger:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.users-danger:focus-visible {
+  outline: 2px solid var(--danger);
+  outline-offset: 2px;
+}
+
+.users-actions .users-link + .users-link {
+  margin-left: 16px;
+}
+
+.users-secondary:hover {
+  background: #f9fafb;
+}
+
+.users-primary:focus-visible,
+.users-secondary:focus-visible,
+.users-link:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.users-h2 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 12px;
+}
+
+.users-invites {
+  border-top: 1px solid var(--border);
+  padding: 16px;
+}
+
+.users-invites ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.users-invites li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.users-aside {
+  padding: 20px;
+}
+
+.users-aside dl {
+  margin: 0;
+}
+
+.users-aside-row {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.users-aside-row:last-child {
+  border-bottom: none;
+}
+
+.users-aside dd {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.users-aside-note {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- Dialogs ---------- */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(17 24 39 / 0.5);
+}
+
+.modal {
+  width: 100%;
+  max-width: 460px;
+  max-height: calc(100svh - 32px);
+  overflow-y: auto;
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 20px 50px rgb(0 0 0 / 0.25);
+}
+
+.modal-title {
+  font-size: 19px;
+  font-weight: 700;
+  margin: 0 0 16px;
+}
+
+.modal-text {
+  margin: 0 0 8px;
+  color: var(--text-muted);
+}
+
+.modal-roles {
+  border: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.modal-role {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+}
+
+.modal-role input {
+  margin-top: 4px;
+  accent-color: var(--primary);
+}
+
+.modal-role-selected {
+  border-color: var(--primary);
+  background: #eef2ff;
+}
+
+.modal-role-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.modal-role-summary {
+  display: block;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.modal-current {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 0 8px;
+}
+
+.modal-note {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 14px 0 0;
+}
+
+.modal-error {
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 12px 0 0;
+  font-size: 14px;
+}
+
+.modal-label {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  margin: 0 0 6px;
+}
+
+.modal-input {
+  display: block;
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  margin-bottom: 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.modal-input:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+@media (max-width: 640px) {
+  .users {
+    padding: 20px 16px 32px;
+  }
+
+  .users-table thead {
+    display: none;
+  }
+
+  .users-table tr {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 6px 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .users-table td {
+    padding: 0;
+    border: none;
+  }
+
+  .users-table td:first-child {
+    grid-column: 1 / -1;
+  }
+}

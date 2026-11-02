@@ -141,7 +141,17 @@ npm run delete-user -- --email you@calpoly.edu
 ```
 
 It asks you to type the email again, and won't delete the only
-admin.
+admin unless you add `--force`.
+
+**Re-running the sign-up demo.** To show sign-up, the
+verification email and becoming admin again from scratch:
+
+```bash
+npm run delete-user -- --email you@calpoly.edu --force
+# sign up again on the site and enter the emailed code
+npm run set-role -- --email you@calpoly.edu --role admin
+# refresh the page: the ADMIN badge and Users & Roles tab appear
+```
 
 `npm run create-user` still works for adding an account directly
 (it's marked verified, and you pick the role).

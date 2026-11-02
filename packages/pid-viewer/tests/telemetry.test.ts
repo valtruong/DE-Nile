@@ -64,6 +64,7 @@ describe("read-only RiverDash adapter", () => {
     expect(listener).toHaveBeenLastCalledWith({
       status: "available",
       value: 100,
+      freshness: "unconfirmed",
       updatedAt: "publisher timestamp"
     });
     valve.update("open");
@@ -115,6 +116,34 @@ describe("read-only RiverDash adapter", () => {
       "custom state"
     );
     stop();
+  });
+  it("labels the cached snapshot, detects silence, and clears stale state on a real topic event", () => {
+    vi.useFakeTimers({
+      toFake: ["setTimeout", "clearTimeout", "performance"]
+    });
+    const table = new Table();
+    const topic = table.initialize("pressure", 10);
+    const listener = vi.fn();
+    const stop = createRiverDashSource(table, "R").subscribe(
+      "pressure",
+      listener
+    );
+    try {
+      expect(listener.mock.lastCall?.[0].freshness).toBe(
+        "unconfirmed"
+      );
+      vi.advanceTimersByTime(5000);
+      expect(listener.mock.lastCall?.[0].status).toBe("stale");
+      topic.update(10);
+      expect(listener.mock.lastCall?.[0]).toEqual({
+        status: "available",
+        value: 10,
+        updatedAt: "publisher timestamp"
+      });
+    } finally {
+      stop();
+      vi.useRealTimers();
+    }
   });
   it("rejects writable modes and unsafe numeric conversions", () => {
     expect(() =>
@@ -180,4 +209,32 @@ describe("readable state displays", () => {
       "Not bound"
     );
   });
+});
+
+it.each([NaN, Infinity, -Infinity])(
+  "rejects non-finite numeric readings: %s",
+  (value) => {
+    expect(
+      formatReading(
+        { topic: "pressure", valueType: "number" },
+        { status: "available", value }
+      ).text
+    ).toBe("Invalid data");
+  }
+);
+
+it("removes table listeners when opening a RiverDash topic throws", () => {
+  const table = new Table();
+  table.get_topic.mockImplementation(() => {
+    throw new Error("Cannot open");
+  });
+  const add = vi.spyOn(table, "addEventListener");
+  const remove = vi.spyOn(table, "removeEventListener");
+  expect(() =>
+    createRiverDashSource(table, "R").subscribe(
+      "pressure",
+      vi.fn()
+    )
+  ).toThrow("Cannot open");
+  expect(remove.mock.calls).toEqual(add.mock.calls);
 });

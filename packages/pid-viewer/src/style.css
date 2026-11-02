@@ -54,11 +54,17 @@
   --pid-tank-fluid: #8299ff;
   --pid-valve-open: #a5c200;
   --pid-valve-closed: #c20d00;
+  --pid-state-open: #526300;
+  --pid-state-closed: #aa1000;
+  --pid-state-stale: #92400e;
 }
 .denile-theme--dark {
   --pid-stroke: #f8fafc;
   --pid-surface: #12151b;
   --pid-muted: #9ca3af;
+  --pid-state-open: #d2e669;
+  --pid-state-closed: #ff7b72;
+  --pid-state-stale: #fbbf24;
 }
 .denile-theme--light {
   --pid-stroke: #111827;
@@ -77,4 +83,13 @@
 }
 .denile-symbol svg [stroke] {
   vector-effect: non-scaling-stroke;
+}
+
+/* Reserve status space so stale/cached text does not move pipe endpoints. */
+.denile-viewer .denile-equipment-state {
+  min-height: 5.6em;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

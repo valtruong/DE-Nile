@@ -4,23 +4,14 @@ import {
   type NodeProps
 } from "@xyflow/react";
 
-import type {
-  SymbolKind,
-  SymbolNode
-} from "./diagram/types";
+import type { SymbolKind, SymbolNode } from "./diagram/types";
 
 import {
   EquipmentSymbol,
-  type Equipment
+  formatReading
 } from "@de-nile/pid-viewer";
 
-const equipmentKinds = {
-  checkValve: "check-valve",
-  engine: "engine",
-  pneumaticValve: "pneumatic-valve",
-  pressureTransducer: "pressure-transducer",
-  tank: "tank"
-} as const satisfies Record<SymbolKind, Equipment["kind"]>;
+import { equipmentKinds } from "./diagram/equipmentKinds";
 
 const symbolSizes = {
   tank: 130,
@@ -40,15 +31,15 @@ function ValveStateLabel({
   const details = {
     open: {
       label: "OPEN",
-      color: "#A5C200"
+      color: "var(--pid-state-open)"
     },
     closedPV1: {
       label: "CLOSED",
-      color: "#C20D00"
+      color: "var(--pid-state-closed)"
     },
     closedPV2: {
       label: "CLOSED",
-      color: "#C20D00"
+      color: "var(--pid-state-closed)"
     }
   }[state];
 
@@ -104,11 +95,7 @@ function Port({
   );
 }
 
-function SymbolPorts({
-  kind
-}: {
-  kind: SymbolKind;
-}) {
+function SymbolPorts({ kind }: { kind: SymbolKind }) {
   if (kind === "tank") {
     return (
       <>
@@ -200,10 +187,14 @@ function SymbolPorts({
   );
 }
 
-  function PIDSymbolNode({ data }: NodeProps<SymbolNode>) {
+function PIDSymbolNode({ data }: NodeProps<SymbolNode>) {
   const symbolSize = symbolSizes[data.kind];
+  const display = data.binding
+    ? formatReading(data.binding, data.reading)
+    : undefined;
 
-  const isPressureTransducer = data.kind === "pressureTransducer";
+  const isPressureTransducer =
+    data.kind === "pressureTransducer";
 
   const valveState =
     data.visualState === "open" ||
@@ -220,49 +211,70 @@ function SymbolPorts({
         textAlign: "center",
         color: "var(--pid-stroke)"
       }}>
-
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        height: `${symbolSize}px`
-      }}>
       <div
         style={{
-          position: "relative",
-          width: `${symbolSize}px`,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
           height: `${symbolSize}px`
         }}>
-        <EquipmentSymbol
-          kind={equipmentKinds[data.kind]}
-          visualState={data.visualState}
-          size={symbolSize}
-        />
-        <SymbolPorts kind={data.kind} />
+        <div
+          style={{
+            position: "relative",
+            width: `${symbolSize}px`,
+            height: `${symbolSize}px`
+          }}>
+          <EquipmentSymbol
+            kind={equipmentKinds[data.kind]}
+            visualState={data.visualState}
+            size={symbolSize}
+          />
+          <SymbolPorts kind={data.kind} />
+        </div>
       </div>
-    </div>
 
-    <div
-      style={
-        isPressureTransducer
-          ? {
-              position: "absolute",
-              top: "6px",
-              left: "calc(50% + 32px)",
-              width: "150px",
-              textAlign: "left",
-              lineHeight: 1.2
-            }
-          : undefined
-      }>
-      {data.label}
-    </div>
+      <div
+        style={
+          isPressureTransducer
+            ? {
+                position: "absolute",
+                top: "6px",
+                left: "calc(50% + 32px)",
+                width: "150px",
+                textAlign: "left",
+                lineHeight: 1.2
+              }
+            : undefined
+        }>
+        {data.label}
+      </div>
 
       {data.kind === "pneumaticValve" && (
-        <ValveStateLabel state={valveState} />
+        // Reserve the status line so stale/unavailable transitions keep ports fixed.
+        <div style={{ height: "19px", display: "flow-root" }}>
+          <ValveStateLabel state={valveState} />
+        </div>
       )}
-
+      {display &&
+        !(data.kind === "pneumaticValve" && valveState) && (
+          <div
+            className="pid-telemetry-reading"
+            style={{
+              position: "absolute",
+              top: "100%",
+              left: 0,
+              width: "100%",
+              paddingTop: "4px",
+              fontSize: "12px",
+              lineHeight: 1.4,
+              color:
+                data.reading?.status === "stale"
+                  ? "var(--pid-state-stale)"
+                  : "var(--pid-stroke)"
+            }}>
+            {display.text}
+          </div>
+        )}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -12,6 +13,7 @@ import {
   ReactFlow,
   type Node,
   type NodeProps,
+  type NodeChange,
   useReactFlow,
   useNodesInitialized,
   useStore
@@ -27,6 +29,7 @@ import {
   type TelemetrySource
 } from "./telemetry";
 import { EquipmentSymbol } from "./symbols";
+import { useTopicReadings } from "./useTopicReadings";
 
 type EquipmentNode = Node<
   {
@@ -54,7 +57,9 @@ function PIDSymbolNode({ data }: NodeProps<EquipmentNode>) {
       {data.symbol ?? (
         <EquipmentSymbol kind={data.equipment.kind} />
       )}
-      <span style={{ color: display.color }}>
+      <span
+        className="denile-equipment-state"
+        style={{ color: display.color }}>
         {display.text}
       </span>
       <Handle
@@ -67,14 +72,30 @@ function PIDSymbolNode({ data }: NodeProps<EquipmentNode>) {
 }
 /** Fit after React Flow has measured its panel, never on telemetry ticks. */
 function ResponsiveFit({ diagram }: { diagram: Diagram }) {
-  const { fitView } = useReactFlow();
+  const { fitBounds, getNodesBounds, getNodes } =
+    useReactFlow();
   const initialized = useNodesInitialized();
   const width = useStore((state) => state.width);
   const height = useStore((state) => state.height);
   useEffect(() => {
-    if (initialized && width > 0 && height > 0)
-      void fitView({ padding: 0.2 });
-  }, [diagram, fitView, initialized, width, height]);
+    if (!initialized || width <= 0 || height <= 0) return;
+    // fitView queues node changes in React Flow; this controlled read-only canvas
+    // instead fits measured bounds directly, without accepting any node edits.
+    const frame = requestAnimationFrame(() => {
+      void fitBounds(getNodesBounds(getNodes()), {
+        padding: 0.2
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [
+    diagram,
+    fitBounds,
+    getNodesBounds,
+    getNodes,
+    initialized,
+    width,
+    height
+  ]);
   return null;
 }
 const nodeTypes = { equipment: PIDSymbolNode };
@@ -108,50 +129,47 @@ export function PIDViewer({
     }
   }, [input]);
   const diagram = parsed.diagram;
-  const [snapshot, setSnapshot] = useState<{
-    diagram?: Diagram;
-    source?: TelemetrySource;
-    readings: Record<string, Reading>;
-  }>({ readings: {} });
-  useEffect(() => {
-    if (!diagram || !dataSource) return;
-    let active = true;
-    const topics = new Set(
-      diagram.equipment.flatMap((item) =>
-        item.binding ? [item.binding.topic] : []
-      )
-    );
-    const unsubscribers = [...topics].map((topic) =>
-      dataSource.subscribe(topic, (reading) => {
-        if (!active) return;
-        setSnapshot((previous) => ({
-          diagram,
-          source: dataSource,
-          readings: {
-            ...(previous.diagram === diagram &&
-            previous.source === dataSource
-              ? previous.readings
-              : {}),
-            [topic]: reading
-          }
-        }));
-      })
-    );
-    return () => {
-      active = false;
-      unsubscribers.forEach((unsubscribe) => unsubscribe());
-    };
-  }, [diagram, dataSource]);
-  const readings =
-    snapshot.diagram === diagram &&
-    snapshot.source === dataSource
-      ? snapshot.readings
-      : {};
+  const [measurements, setMeasurements] = useState<
+    Record<string, { width: number; height: number }>
+  >({});
+  // Controlled React Flow nodes must retain measured sizes for initialization and
+  // responsive fitting. Accept dimensions only; monitoring never accepts edits.
+  const onNodesChange = useCallback(
+    (changes: NodeChange<EquipmentNode>[]) => {
+      setMeasurements((previous) => {
+        let next = previous;
+        for (const change of changes) {
+          if (
+            change.type !== "dimensions" ||
+            !change.dimensions
+          )
+            continue;
+          const size = change.dimensions;
+          if (
+            previous[change.id]?.width === size.width &&
+            previous[change.id]?.height === size.height
+          )
+            continue;
+          if (next === previous) next = { ...previous };
+          next[change.id] = size;
+        }
+        return next;
+      });
+    },
+    []
+  );
+  const readings = useTopicReadings(
+    dataSource,
+    diagram?.equipment.flatMap((equipment) =>
+      equipment.binding ? [equipment.binding.topic] : []
+    ) ?? []
+  );
   const nodes: EquipmentNode[] =
     diagram?.equipment.map((equipment) => ({
       id: equipment.id,
       type: "equipment",
       position: { ...equipment.position },
+      measured: measurements[equipment.id],
       data: {
         equipment,
         symbol: renderSymbol?.(equipment),
@@ -181,13 +199,14 @@ export function PIDViewer({
     );
   return (
     <div
-      className={`denile-viewer ${className}`}
+      className={`denile-viewer denile-theme denile-theme--light ${className}`}
       role="region"
       aria-label={diagram.name}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
+        onNodesChange={onNodesChange}
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable={false}

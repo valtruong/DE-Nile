@@ -1,36 +1,46 @@
 import { readFileSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 import { expect, it } from "vitest";
-import { EquipmentSymbol } from "../src/symbols";
+import {
+  EquipmentSymbol,
+  type EquipmentVisualState
+} from "../src/symbols";
+import type { Equipment } from "../src/diagram";
 
-it.each([
-  "tank",
-  "check-valve",
-  "pneumatic-valve",
-  "pressure-transducer",
-  "engine"
-] as const)("ships the team's %s SVG unchanged", (kind) => {
-  const file = `${kind}.svg`;
-  const packaged = readFileSync(
-    new URL(`../src/assets/${file}`, import.meta.url),
-    "utf8"
-  );
-  const original = readFileSync(
-    new URL(
-      `../../react-frontend/src/assets/${file}`,
-      import.meta.url
-    ),
-    "utf8"
-  );
-  expect(packaged).toBe(original);
-  const html = renderToStaticMarkup(
-    <EquipmentSymbol kind={kind} />
-  );
-  const src = html.match(/src="([^"]+)"/)?.[1] ?? "";
-  expect(src).toMatch(/^data:image\/svg\+xml,/);
-  const embedded = decodeURIComponent(
-    src.slice(src.indexOf(",") + 1)
-  ).replaceAll("&#x27;", '"');
-  const viewBox = original.match(/viewBox="([^"]+)"/)?.[1];
-  expect(embedded).toContain(`viewBox="${viewBox}"`);
-});
+const cases: [
+  Equipment["kind"],
+  EquipmentVisualState | undefined,
+  string
+][] = [
+  ["tank", undefined, "tank"],
+  ["check-valve", undefined, "check-valve"],
+  ["pneumatic-valve", undefined, "pneumatic-valve"],
+  ["pressure-transducer", undefined, "pressure-transducer"],
+  ["engine", undefined, "engine"],
+  ["tank", "full", "full-tank"],
+  ["tank", "half", "half-tank"],
+  ["tank", "empty", "tank"],
+  ["pneumatic-valve", "open", "open-pv"],
+  ["pneumatic-valve", "closedPV1", "closed-pv-1"],
+  ["pneumatic-valve", "closedPV2", "closed-pv-2"]
+];
+it.each(cases)(
+  "renders local SVG artwork for %s / %s",
+  (kind, visualState, file) => {
+    // Valerie centralized the assets in pid-viewer and now embeds local SVG markup.
+    const asset = readFileSync(
+      new URL(`../src/assets/${file}.svg`, import.meta.url),
+      "utf8"
+    );
+    const html = renderToStaticMarkup(
+      <EquipmentSymbol
+        kind={kind}
+        visualState={visualState}
+        size={90}
+      />
+    );
+    expect(html).toContain(asset);
+    expect(html).toContain("width:90px;height:90px");
+    expect(html).not.toContain('src="https://');
+  }
+);

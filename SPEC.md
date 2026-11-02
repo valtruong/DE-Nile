@@ -149,6 +149,20 @@ DE-Nile uses those tags to update the correct equipment displays. It consumes te
 - Avoid displaying unavailable data as a valid zero or a confirmed equipment state.
 - Agree with RiverDash on warning callbacks and stale-data thresholds before implementation.
 
+### Implemented update-silence behavior
+
+The GDT adapter now implements RiverDash's provisional
+five-second update-silence threshold, configurable through
+`staleAfterMs`. A local monotonic clock measures time since
+received updates; publisher timestamps are not compared with the
+browser clock. Cached snapshots remain explicitly unconfirmed
+until an update arrives. A missing topic remains unavailable.
+This is a display status, not a hardware alarm, confirmed
+disconnect, or proof of sensor-sample age. Real topic formats
+and host disconnect signaling still require agreement. See the
+viewer package README for API details and the pause/resume
+demonstration.
+
 ## Quality requirements and constraints
 
 - **Offline operation:** Bundle required scripts, fonts, symbols, and other assets locally. Runtime operation must not depend on CDNs or online APIs.

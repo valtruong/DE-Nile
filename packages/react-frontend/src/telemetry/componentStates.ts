@@ -27,7 +27,7 @@ export const sampleTelemetry: SampleTelemetry = {
 export function normalizeVisualState(
   nodeId: string,
   kind: SymbolKind,
-  value: SampleTelemetryValue | ComponentVisualState
+  value: unknown
 ): ComponentVisualState | undefined {
   if (kind === "tank") {
     return value === "full" ||

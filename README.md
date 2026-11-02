@@ -20,8 +20,8 @@ npm run dev --workspace=de-nile
 ```
 
 The default frontend retains the team’s existing canvas. Open
-`/?viewerDemo=1` for the optional package demonstration with the
-team’s five equipment SVGs and simulated telemetry. Turn off
+`/?viewerDemo=1` for the original diagram styling with simulated
+pressure readings and valve states beneath the equipment labels. Turn off
 simulation to see unavailable-data behavior. The demo never
 connects to hardware.
 
@@ -82,9 +82,10 @@ files are omitted for readability.
 
 - **`react-frontend`** runs the standalone application. Its
   default view uses the team’s authentication flow and diagram
-  canvas. The optional `/?viewerDemo=1` view exercises the
-  reusable viewer with simulated telemetry after sign-in or
-  continuing as a viewer.
+  canvas. The optional `/?viewerDemo=1` view connects simulated
+  telemetry to the original diagram components using the package's
+  shared reading types and formatter after sign-in or continuing
+  as a viewer.
 - **`pid-viewer`** is the package RiverDash imports. It
   validates saved diagrams, renders equipment and connections,
   and reads telemetry through the host-provided data source. It
@@ -114,6 +115,8 @@ editor.
 - [Confirmed project context](project-context.md)
 - [Contribution guidelines](contributing.md)
 
-Current real telemetry tag contracts, stale-data policies, and
-final CPSS symbol approval remain open. See `SPEC.md` and
-`project-context.md` for project constraints.
+Real telemetry tag contracts, host disconnect signaling, and
+final CPSS symbol approval remain open. The GDT adapter uses a
+provisional five-second update-silence timeout; see the package
+README for cached-value handling and configuration. See
+`SPEC.md` and `project-context.md` for project constraints.

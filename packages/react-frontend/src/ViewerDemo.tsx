@@ -1,65 +1,62 @@
 import { useState } from "react";
-import {
-  PIDViewer,
-  parseDiagram,
-  type TelemetrySource
-} from "@de-nile/pid-viewer";
-import example from "@de-nile/pid-viewer/example";
+import { DiagramView } from "./components/DiagramView";
+import { simulatedBindings } from "./diagram/simulatedBindings";
+import { createSimulation } from "./diagram/simulatedTelemetry";
 import "@de-nile/pid-viewer/style.css";
 import "./demo.css";
 
-const diagram = parseDiagram(example);
-
-// This source is only a local demo. Real hosting passes createRiverDashSource(GDT, TopicOpenMode.Read).
-const simulation: TelemetrySource = {
-  subscribe(topic, listener) {
-    let tick = 0;
-    const publish = () => {
-      tick += 1;
-      listener({
-        status: "available",
-        value:
-          topic === "demo.pressure"
-            ? 200 + 10 * Math.sin(tick)
-            : tick % 2
-              ? "closed"
-              : "open"
-      });
-    };
-    publish();
-    const timer = window.setInterval(publish, 1500);
-    return () => window.clearInterval(timer);
-  }
-};
-
-/** Standalone demo shell; the npm viewer itself has no timers or network connection. */
+/** Pause delivery to exercise stale-data handling without disconnecting the source. */
 export default function ViewerDemo() {
+  const [simulation] = useState(createSimulation);
   const [simulate, setSimulate] = useState(true);
+  const [paused, setPaused] = useState(false);
   return (
     <main className="demo-app">
       <header>
         <div>
-          <h1>DE-Nile P&amp;ID viewer</h1>
+          <h1>DE-Nile diagram monitoring</h1>
           <p>
-            Simulated readings with team equipment symbols — no
-            hardware connection
+            Team diagram with simulated pressure and valve
+            readings — no hardware connection
+          </p>
+          <p>
+            Pause updates to see the stale indicator after five
+            seconds.
           </p>
         </div>
         <label>
           <input
             type="checkbox"
             checked={simulate}
-            onChange={(event) =>
-              setSimulate(event.target.checked)
-            }
+            onChange={(event) => {
+              simulation.setPaused(false);
+              setPaused(false);
+              setSimulate(event.target.checked);
+            }}
           />{" "}
           Simulate telemetry
         </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={paused}
+            disabled={!simulate}
+            onChange={(event) => {
+              simulation.setPaused(event.target.checked);
+              setPaused(event.target.checked);
+            }}
+          />{" "}
+          Pause simulated updates
+        </label>
       </header>
       <section className="demo-canvas">
-        <PIDViewer
-          diagram={diagram}
-          dataSource={simulate ? simulation : undefined}
+        <DiagramView
+          editable={false}
+          embedded
+          telemetry={{
+            bindings: simulatedBindings,
+            source: simulate ? simulation.source : undefined
+          }}
         />
       </section>
     </main>

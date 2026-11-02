@@ -19,3 +19,10 @@ export {
 } from "./telemetry";
 
 export { EquipmentSymbol } from "./symbols";
+
+export {
+  withUpdateTimeout,
+  type UpdateTimeoutOptions
+} from "./staleness";
+
+export { useTopicReadings } from "./useTopicReadings";

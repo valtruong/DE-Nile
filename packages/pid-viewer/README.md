@@ -91,10 +91,52 @@ in the diagram's `binding.states`. Missing/uninitialized topics
 show `Unavailable`, invalid values show `Invalid data`, and
 unmapped states show `Unknown state`. Zero remains a valid
 reading. Without a source, bound equipment shows `Unavailable`.
-Publisher timestamps are retained as metadata, not compared to
-the browser clock. No stale-data timeout or disconnect policy is
-invented; those require agreement with RiverDash, whose network
-stream is still a placeholder on this branch.
+Publisher timestamps are retained as metadata and never compared
+against the browser clock. The adapter now uses RiverDash's
+provisional guidance of five seconds without received updates.
+
+### Update silence and cached snapshots
+
+`createRiverDashSource` wraps subscriptions with
+`withUpdateTimeout`, which uses a local monotonic clock
+(`performance.now()`). After five seconds of silence, it emits a
+`stale` reading. The viewer displays **Stale — no updates
+received for at least 5 s**, without showing the last valve
+state or a numeric value as current. A new update, including an
+unchanged value, restores the normal display and restarts the
+timer.
+
+```ts
+const source = createRiverDashSource(GDT, TopicOpenMode.Read, {
+  staleAfterMs: 5000
+});
+```
+
+The timeout can be configured by the host through
+`staleAfterMs`. Generic/simulated sources can opt into the same
+behavior using
+`withUpdateTimeout(source, { staleAfterMs: 5000 })`. Missing or
+uninitialized topics remain `Unavailable`; they are not stale
+readings. Invalid payloads remain `Invalid data` while updates
+continue and become stale if their updates stop. Unsubscribing
+removes both upstream listeners and pending timers.
+
+The first `read_data()` result may be cached. Its age cannot be
+established from an unrelated publisher clock, so it carries
+`freshness: "unconfirmed"` and is displayed with **freshness
+unconfirmed**, without a confirmed-state color, until a topic
+update arrives. If no updates arrive, the timeout runs from
+local observation of that snapshot. This detects update silence;
+it does not establish the age of the sensor sample or prove a
+network disconnect.
+
+In the reviewed GDT version, `get_time_since_last_update()` and
+the update event's delta represent the interval between the
+previous updates; they do not keep increasing during silence.
+The adapter therefore does not use them as a running timeout.
+The standalone demo's **Pause simulated updates** control
+exercises timeout and recovery; disabling **Simulate telemetry**
+removes the source and shows `Unavailable` instead.
 
 ## Viewer behavior and remaining scope
 
@@ -106,19 +148,19 @@ panel provides text access to all states. Diagrams are validated
 at the viewer boundary; malformed configurations render an error
 instead of a partial canvas.
 
-Default SVGs match the team's symbol assets merged from main.
-Keep `src/assets/` in sync with the frontend originals when
-updating symbols. Final CPSS convention approval remains a team
+Equipment SVGs and their state variants are centralized in
+`src/assets/`; the standalone frontend uses these same assets.
+There are no duplicate frontend SVG originals to keep in sync. Final CPSS convention approval remains a team
 decision. Pass
 `renderSymbol={(equipment) => <YourTeamSymbol kind={equipment.kind} />}`
 to reuse the team’s existing SVG components without changing the
 telemetry adapter. Real topic names/types/units, enum decoding,
-stale/disconnected reporting, and final host module registration
-remain integration decisions. No editor, login, database, or
-hardware-control behavior is included in the package. The
-standalone app retains the team’s authentication and diagram
-view; the optional telemetry demo uses the same access gate,
-including guest viewer mode.
+publisher-sample age, transport disconnect signaling, and final
+host module registration remain integration decisions. No
+editor, login, database, or hardware-control behavior is
+included in the package. The standalone app retains the team’s
+authentication and diagram view; the optional telemetry demo
+uses the same access gate, including guest viewer mode.
 
 ## Check against Alvin's implementation
 
@@ -135,3 +177,18 @@ decoding, updates, cleanup, and no outgoing messages from the
 read subscription. It does not connect to the test stand or
 verify the placeholder network transport. Regular `npm test`
 needs no RiverDash checkout.
+
+The compatibility test's fake publishers use the current
+`ReadWrite` API and `Message` values (verified with RiverDash
+commit `7ae0b3d`). These pressure/valve values and tags are test
+fixtures, not the final CPSS data contract. This check covers
+the reader integration, not all GDT functionality or real
+network delivery.
+
+## Sharing readings with a custom canvas
+
+`useTopicReadings(source, topics)` exposes the same read-only subscription
+lifecycle used by `PIDViewer`. Topic names are deduplicated, old callbacks
+are ignored after cleanup, and reconnecting starts without old readings.
+The hook does not change equipment positions or assign visual state meanings.
+Its server-rendered snapshot is empty, so server rendering never opens topics.

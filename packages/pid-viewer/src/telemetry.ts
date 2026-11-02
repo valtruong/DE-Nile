@@ -1,7 +1,17 @@
 import type { Binding, Scalar } from "./diagram";
+import {
+  withUpdateTimeout,
+  type UpdateTimeoutOptions
+} from "./staleness";
 
 export type Reading =
-  | { status: "available"; value: Scalar; updatedAt?: string }
+  | {
+      status: "available";
+      value: Scalar;
+      updatedAt?: string;
+      freshness?: "unconfirmed";
+    }
+  | { status: "stale"; timeoutMs: number }
   | { status: "unavailable"; message: string }
   | { status: "invalid"; message: string };
 
@@ -29,7 +39,7 @@ export interface RiverDashTable<
 > extends EventTarget {
   get_topic(name: string, mode: ReadMode): ReadResult;
 }
-export interface RiverDashOptions {
+export interface RiverDashOptions extends UpdateTimeoutOptions {
   decode?: (value: unknown) => Scalar;
 }
 
@@ -68,7 +78,7 @@ export function decodeRiverDashValue(value: unknown): Scalar {
 
 /**
  * Pass the host's GDT and TopicOpenMode.Read. No table or network is created here.
- * Event names match RiverDash global_data_table branch commit 93e27bf.
+ * Event names verified against RiverDash global_data_table commit 7ae0b3d.
  */
 export function createRiverDashSource<ReadMode extends string>(
   table: RiverDashTable<ReadMode>,
@@ -78,21 +88,25 @@ export function createRiverDashSource<ReadMode extends string>(
   if (readMode !== "R")
     throw new Error("DE-Nile requires read-only topic access");
   const decode = options.decode ?? decodeRiverDashValue;
-  return {
+  const source: TelemetrySource = {
     subscribe(name, listener) {
       let topic: ReadTopic | undefined;
       let disposed = false;
       const emit = (reading: Reading) => {
         if (!disposed) listener(reading);
       };
-      const update = () => {
+      const read = (snapshot: boolean) => {
         if (!topic) return;
         let reading: Reading;
         try {
           reading = {
             status: "available",
             value: decode(topic.read_data()),
-            updatedAt: topic.get_last_update_time().toString()
+            updatedAt: topic.get_last_update_time().toString(),
+            // A cached value's publisher-clock age cannot be established locally.
+            ...(snapshot
+              ? { freshness: "unconfirmed" as const }
+              : {})
           };
         } catch (error) {
           reading = {
@@ -105,6 +119,7 @@ export function createRiverDashSource<ReadMode extends string>(
         }
         emit(reading);
       };
+      const update = () => read(false);
       const open = () => {
         // Reinitialization may replace the topic; detach the previous handle first.
         topic?.removeEventListener(
@@ -119,7 +134,7 @@ export function createRiverDashSource<ReadMode extends string>(
               "RiverDash:TopicUpdateEvent",
               update
             );
-            update();
+            read(true);
           },
           () =>
             emit({
@@ -139,17 +154,7 @@ export function createRiverDashSource<ReadMode extends string>(
         )
           open();
       };
-      // Register before opening so a newly initialized topic cannot be missed.
-      table.addEventListener(
-        "RiverDash:GDTEventTopicInitialized",
-        initialized
-      );
-      table.addEventListener(
-        "RiverDash:GDTEventTopicDeclared",
-        initialized
-      );
-      open();
-      return () => {
+      const dispose = () => {
         disposed = true;
         topic?.removeEventListener(
           "RiverDash:TopicUpdateEvent",
@@ -164,8 +169,25 @@ export function createRiverDashSource<ReadMode extends string>(
           initialized
         );
       };
+      // Register before opening so a newly initialized topic cannot be missed.
+      table.addEventListener(
+        "RiverDash:GDTEventTopicInitialized",
+        initialized
+      );
+      table.addEventListener(
+        "RiverDash:GDTEventTopicDeclared",
+        initialized
+      );
+      try {
+        open();
+      } catch (error) {
+        dispose();
+        throw error;
+      }
+      return dispose;
     }
   };
+  return withUpdateTimeout(source, options);
 }
 
 /** Never infer valve semantics from a number: labels come from the diagram. */
@@ -176,24 +198,36 @@ export function formatReading(
   if (!binding) return { text: "Not bound" };
   if (!reading || reading.status === "unavailable")
     return { text: "Unavailable" };
+  if (reading.status === "stale") {
+    return {
+      text: `Stale — no updates received for at least ${reading.timeoutMs / 1000} s`,
+      color: "#b54708"
+    };
+  }
   if (
     reading.status === "invalid" ||
-    typeof reading.value !== binding.valueType
+    typeof reading.value !== binding.valueType ||
+    (typeof reading.value === "number" &&
+      !Number.isFinite(reading.value))
   )
     return { text: "Invalid data" };
+  const display = (text: string, color?: string) =>
+    reading.freshness === "unconfirmed"
+      ? { text: `${text} — freshness unconfirmed` }
+      : { text, color };
   if (binding.states) {
     const state = binding.states.find(
       (item) => item.value === reading.value
     );
     return state
-      ? { text: state.label, color: state.color }
-      : { text: "Unknown state" };
+      ? display(state.label, state.color)
+      : display("Unknown state");
   }
   const value =
     typeof reading.value === "number"
       ? reading.value.toFixed(binding.precision ?? 1)
       : String(reading.value);
-  return {
-    text: binding.unit ? `${value} ${binding.unit}` : value
-  };
+  return display(
+    binding.unit ? `${value} ${binding.unit}` : value
+  );
 }

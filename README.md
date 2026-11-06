@@ -107,6 +107,17 @@ files directly. The standalone diagram editor remains planned;
 the existing canvas and demo do not constitute a complete
 editor.
 
+## Access control (TE6)
+
+### Sign-up and email verification
+![Sign-up sequence diagram](docs/te6/signup.png)
+
+### Sign-in
+![Sign-in sequence diagram](docs/te6/signin.png)
+
+### Protected request (admin-only route)
+![Protected request sequence diagram](docs/te6/protected.png)
+
 ## Additional documentation
 
 - [P&ID data format](docs/data-format.md)

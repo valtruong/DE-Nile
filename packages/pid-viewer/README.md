@@ -36,7 +36,6 @@ import {
 } from "@de-nile/pid-viewer";
 import "@de-nile/pid-viewer/style.css";
 import { GDT } from "@river-dash/global-data-source";
-import { TopicOpenMode } from "@river-dash/global-data-source/topic";
 import config from "./my-diagram.json";
 
 const diagram = parseDiagram(config);
@@ -44,7 +43,7 @@ const diagram = parseDiagram(config);
 export function DiagramPanel() {
   // Keep this adapter stable so normal React renders do not resubscribe.
   const source = useMemo(
-    () => createRiverDashSource(GDT, TopicOpenMode.Read),
+    () => createRiverDashSource(GDT, "R"),
     []
   );
   return (
@@ -55,6 +54,12 @@ export function DiagramPanel() {
 }
 ```
 
+The `"R"` argument is GDT's read-only mode. In the current GDT package,
+`TopicOpenMode` is a type-only export from `/topic`, so importing it as a
+runtime value does not work. Passing the literal avoids that unavailable
+runtime export. RiverDash owns the GDT singleton and its WebSocket lifecycle;
+DE-Nile only subscribes to the supplied table.
+
 RiverDash must compile its global-data-source package first, as
 its README requires. Pass the host's existing GDT; do not
 construct a second data table. The adapter is structurally typed
@@ -63,10 +68,12 @@ singleton and an unavailable registry dependency.
 
 ## Live data processing (#33)
 
-The adapter was written against `Alvin-He/river-dash` branch
-`global_data_table`, commit `93e27bf`. The folder on that branch
-is `frontend/packages/global_data_source`. It opens topics only
-with `TopicOpenMode.Read`, reads current values, subscribes to
+The adapter is verified against `Alvin-He/river-dash` branch
+`global_data_table` at commit `b1bac85` and `main` at commit `ab02a58`.
+Both declare package version `1.0.0`; use commit IDs to identify the
+verified source. The package folder is
+`frontend/packages/global_data_source`. The adapter opens topics only
+in read mode (`"R"`), reads current values, subscribes to
 `RiverDash:TopicUpdateEvent`, retries after topic
 declarations/initialization, and removes listeners when the
 viewer unmounts or its source/config changes. Only one
@@ -78,7 +85,7 @@ conversions are rejected. Compound values such as Enum/Group/ADT
 require an explicit host decoder:
 
 ```ts
-const source = createRiverDashSource(GDT, TopicOpenMode.Read, {
+const source = createRiverDashSource(GDT, "R", {
   decode(value) {
     // Validate the real type and return the agreed number/string/boolean here.
     return decodeConfirmedTelemetry(value);
@@ -107,7 +114,7 @@ unchanged value, restores the normal display and restarts the
 timer.
 
 ```ts
-const source = createRiverDashSource(GDT, TopicOpenMode.Read, {
+const source = createRiverDashSource(GDT, "R", {
   staleAfterMs: 5000
 });
 ```
@@ -175,12 +182,15 @@ classes, a local table, and simulated numeric values. It
 verifies delayed topic initialization, a valid zero, numeric
 decoding, updates, cleanup, and no outgoing messages from the
 read subscription. It does not connect to the test stand or
-verify the placeholder network transport. Regular `npm test`
-needs no RiverDash checkout.
+verify real WebSocket delivery. The test replaces the default WebSocket
+with an inert stub and suppresses the imported singleton's receive loop.
+It uses a local, non-network transport. Fake-publisher stream messages
+are intercepted; all adapter topic opens are asserted to be read-only.
+Regular `npm test` needs no RiverDash checkout.
 
 The compatibility test's fake publishers use the current
 `ReadWrite` API and `Message` values (verified with RiverDash
-commit `7ae0b3d`). These pressure/valve values and tags are test
+commit `b1bac85`). These pressure/valve values and tags are test
 fixtures, not the final CPSS data contract. This check covers
 the reader integration, not all GDT functionality or real
 network delivery.

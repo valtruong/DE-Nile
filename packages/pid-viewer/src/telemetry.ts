@@ -78,7 +78,7 @@ export function decodeRiverDashValue(value: unknown): Scalar {
 
 /**
  * Pass the host's GDT and TopicOpenMode.Read. No table or network is created here.
- * Event names verified against RiverDash global_data_table commit 7ae0b3d.
+ * Event names verified against RiverDash commits b1bac85 and ab02a58.
  */
 export function createRiverDashSource<ReadMode extends string>(
   table: RiverDashTable<ReadMode>,

@@ -35,6 +35,17 @@
   margin: 0;
 }
 
+.library-head-buttons,
+.library-empty-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.library-empty-buttons {
+  justify-content: center;
+}
+
 .library-notice {
   background: #eef2ff;
   border: 1px solid #c7d2fe;

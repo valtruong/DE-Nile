@@ -70,7 +70,8 @@ export function DiagramView({
   telemetry,
   embedded = false,
   diagram,
-  onChange
+  onChange,
+  minimap = true
 }: {
   editable: boolean;
   telemetry?: DiagramTelemetry;
@@ -79,6 +80,8 @@ export function DiagramView({
   diagram?: Canvas;
   /** Called with the current layout whenever it changes. */
   onChange?: (canvas: Canvas) => void;
+  /** Hide the minimap in small previews. */
+  minimap?: boolean;
 }) {
   const [theme, setTheme] = useState<Theme>("dark");
   // Read once: give the component a new `key` to show another
@@ -183,7 +186,7 @@ export function DiagramView({
           color={theme === "dark" ? "#2C313A" : "#D1D5DB"}
         />
         <Controls showInteractive={canEdit} />
-        <MiniMap />
+        {minimap && <MiniMap />}
       </ReactFlow>
     </div>
   );

@@ -5,21 +5,25 @@ import { AppHeader, type Page } from "./components/AppHeader";
 import ViewerDemo from "./ViewerDemo";
 import { AuthScreens } from "./pages/AuthScreens";
 import { DiagramPage } from "./pages/DiagramPage";
+import { ImportPage } from "./pages/ImportPage";
 import { LibraryPage } from "./pages/LibraryPage";
 import { UsersPage } from "./pages/UsersPage";
 
 // Pages live in the URL hash so refresh and the back button work:
 //   #diagrams (or nothing)  diagram library
 //   #diagram/<id>           one saved diagram ("new" = starter)
+//   #import                 import a P&ID file (editors)
 //   #users                  Users & Roles (admins)
 type Route =
   | { page: "diagrams" }
+  | { page: "import" }
   | { page: "diagram"; id: string }
   | { page: "users" };
 
 function routeFromHash(): Route {
   const hash = (window.location.hash ?? "").slice(1);
   if (hash === "users") return { page: "users" };
+  if (hash === "import") return { page: "import" };
   if (hash.startsWith("diagram/")) {
     const id = decodeURIComponent(
       hash.slice("diagram/".length)
@@ -79,6 +83,13 @@ function App() {
           just keeps non-admins from seeing an empty page. */}
       {route.page === "users" && isAdmin(role) ? (
         <UsersPage />
+      ) : route.page === "import" ? (
+        <ImportPage
+          onCancel={() => go("diagrams")}
+          onImported={(id) =>
+            go(`diagram/${encodeURIComponent(id)}`)
+          }
+        />
       ) : route.page === "diagram" ? (
         <DiagramPage
           key={route.id}
@@ -91,6 +102,7 @@ function App() {
             go(`diagram/${encodeURIComponent(id)}`)
           }
           onNew={() => go("diagram/new")}
+          onImport={() => go("import")}
         />
       )}
     </>

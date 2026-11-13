@@ -38,10 +38,12 @@ function timeAgo(iso: string, now = Date.now()): string {
 
 export function LibraryPage({
   onOpen,
-  onNew
+  onNew,
+  onImport
 }: {
   onOpen: (id: string) => void;
   onNew: () => void;
+  onImport: () => void;
 }) {
   const { role } = useAuth();
   const editor = role !== null && canEdit(role);
@@ -116,12 +118,20 @@ export function LibraryPage({
             operators see live.
           </p>
         </div>
-        <button
-          type="button"
-          className="btn-primary"
-          onClick={onNew}>
-          + New diagram
-        </button>
+        <div className="library-head-buttons">
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={onImport}>
+            Import P&amp;ID
+          </button>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={onNew}>
+            + New diagram
+          </button>
+        </div>
       </div>
 
       {notice && (
@@ -134,16 +144,24 @@ export function LibraryPage({
         <div className="library-card library-empty">
           <h2>No saved diagrams yet</h2>
           <p>
-            Start from the team&apos;s bipropellant layout,
-            adjust it, then save it. Saved diagrams show up here
-            for the whole team.
+            Start from the team&apos;s bipropellant layout, or
+            import a P&amp;ID file you already have. Saved
+            diagrams show up here for the whole team.
           </p>
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={onNew}>
-            Create your first diagram
-          </button>
+          <div className="library-empty-buttons">
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={onNew}>
+              Create your first diagram
+            </button>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={onImport}>
+              Import a P&amp;ID file
+            </button>
+          </div>
         </div>
       ) : (
         <div className="library-card">

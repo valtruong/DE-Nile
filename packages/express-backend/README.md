@@ -2,9 +2,10 @@
 
 Express server for DE-Nile. Right now it handles sign-in,
 account creation, email verification and roles (issue #25), and
-the admin's Users & Roles page (issue #13); diagram and
-telemetry routes come later. Accounts are shared by the whole
-team through one MongoDB Atlas database.
+the admin's Users & Roles page (issue #13), and saved diagrams
+(issues #11, #17, #51). Telemetry routes come later. Accounts
+and diagrams are shared by the whole team through one MongoDB
+Atlas database.
 
 ## Run it
 
@@ -92,11 +93,11 @@ twice.
 
 ## Accounts and roles
 
-| Role   | Can do                                                                                                         |
-| ------ | -------------------------------------------------------------------------------------------------------------- |
-| viewer | Watch live diagrams. No account needed: "Continue as viewer". Shown as **Operator** on the Users & Roles page. |
-| editor | Everything a viewer can, plus move, connect, delete and save diagrams.                                         |
-| admin  | Everything an editor can, plus invite people and change roles.                                                 |
+| Role   | Can do                                                                                                                   |
+| ------ | ------------------------------------------------------------------------------------------------------------------------ |
+| viewer | Watch the active diagram live. No account needed: "Continue as viewer". Shown as **Operator** on the Users & Roles page. |
+| editor | Everything a viewer can, plus build, save and delete diagrams and choose the active one.                                 |
+| admin  | Everything an editor can, plus invite people and change roles.                                                           |
 
 **Creating an account.** Anyone with a `@calpoly.edu` email can
 click "Create an account" on the sign-in page. We email them a
@@ -201,7 +202,25 @@ Admin only (401 signed out, 403 for viewers/editors):
 | DELETE | `/api/admin/users/:id`      | 204; 409 `CANNOT_REMOVE_SELF` for yourself                 |
 | DELETE | `/api/admin/invites/:email` | 204                                                        |
 
-To make a future route editor-only:
+Diagrams (#11, #17, #51):
+
+| Method | Route                        | Who              | Result                                                    |
+| ------ | ---------------------------- | ---------------- | --------------------------------------------------------- |
+| GET    | `/api/diagrams`              | anyone           | `{ diagrams }`: name, version, active, last saved         |
+| GET    | `/api/diagrams/:id`          | anyone if active | `{ diagram }` with the full P&ID config; 403 `NOT_ACTIVE` |
+|        |                              | else editor      | for operators/guests opening a draft                      |
+| POST   | `/api/diagrams`              | editor           | `{ name, diagram, active? }` → 201                        |
+| PUT    | `/api/diagrams/:id`          | editor           | `{ name, diagram, version, active? }` → next version; 409 |
+|        |                              |                  | `VERSION_CONFLICT` if someone saved since `version`       |
+| POST   | `/api/diagrams/:id/activate` | editor           | makes it the one diagram operators can open live          |
+| DELETE | `/api/diagrams/:id`          | editor           | 204; 409 `DIAGRAM_ACTIVE` for the active diagram          |
+
+`diagram` is the shared P&ID configuration v1 (see
+`docs/data-format.md`). Diagrams are stored in the `diagrams`
+collection of the shared database (or `data/diagrams.json`
+without `MONGODB_URI`).
+
+Writes use the same check. To make another route editor-only:
 
 ```js
 import { requireRole } from "./auth/requireRole.js";

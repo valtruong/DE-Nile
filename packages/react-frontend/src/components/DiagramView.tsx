@@ -18,6 +18,10 @@ import {
 import PIDSymbolNode from "../PIDSymbolNode";
 import { createInitialDiagram } from "../diagram/defaultDiagram";
 import {
+  pipeStyle,
+  type Canvas
+} from "../diagram/diagramFormat";
+import {
   useTelemetryReadings,
   type DiagramTelemetry
 } from "../diagram/useTelemetryReadings";
@@ -64,16 +68,26 @@ function FitDiagram() {
 export function DiagramView({
   editable,
   telemetry,
-  embedded = false
+  embedded = false,
+  diagram,
+  onChange
 }: {
   editable: boolean;
   telemetry?: DiagramTelemetry;
   embedded?: boolean;
+  /** A saved diagram to show; defaults to the team starter layout. */
+  diagram?: Canvas;
+  /** Called with the current layout whenever it changes. */
+  onChange?: (canvas: Canvas) => void;
 }) {
   const [theme, setTheme] = useState<Theme>("dark");
+  // Read once: give the component a new `key` to show another
+  // diagram, so each one keeps its own nodes and pipes.
   const [initialDiagram] = useState(() => {
-    const diagram = createInitialDiagram();
-    diagram.nodes = diagram.nodes.map((node) => ({
+    const canvas: Canvas = diagram
+      ? structuredClone(diagram)
+      : createInitialDiagram();
+    canvas.nodes = canvas.nodes.map((node) => ({
       ...node,
       data: {
         ...node.data,
@@ -84,7 +98,7 @@ export function DiagramView({
         )
       }
     }));
-    return diagram;
+    return canvas;
   });
   const [nodes, , onNodesChange] = useNodesState(
     initialDiagram.nodes
@@ -92,6 +106,10 @@ export function DiagramView({
   const [edges, setEdges, onEdgesChange] = useEdgesState(
     initialDiagram.edges
   );
+
+  useEffect(() => {
+    onChange?.({ nodes, edges });
+  }, [nodes, edges, onChange]);
 
   const readings = useTelemetryReadings(telemetry);
   const canEdit = editable && !telemetry;
@@ -102,8 +120,10 @@ export function DiagramView({
   const onConnect = useCallback(
     (connection: Connection) => {
       if (!canEdit) return;
+      // New pipes look like the rest: square corners, default
+      // gray until someone sets a color.
       setEdges((currentEdges) =>
-        addEdge(connection, currentEdges)
+        addEdge({ ...connection, ...pipeStyle() }, currentEdges)
       );
     },
     [canEdit, setEdges]

@@ -13,6 +13,7 @@ import {
 } from "vitest";
 import { createApp } from "../src/app.js";
 import { createMongoInviteStore } from "../src/auth/inviteStore.js";
+import { createMongoDiagramStore } from "../src/diagrams/diagramStore.js";
 import {
   DuplicateEmailError,
   createMongoUserStore
@@ -32,6 +33,7 @@ describe.skipIf(!URI)("shared MongoDB accounts", () => {
     return createApp({
       userStore: await createMongoUserStore(db),
       inviteStore: await createMongoInviteStore(db),
+      diagramStore: await createMongoDiagramStore(db),
       sessionSecret: "test",
       allowedDomains: ["calpoly.edu"],
       mailer: { send: async (mail) => sent.push(mail) }
@@ -207,6 +209,55 @@ describe.skipIf(!URI)("shared MongoDB accounts", () => {
       .get("/api/admin/invites")
       .expect(200);
     expect(left.body.invites).toEqual([]);
+  });
+
+  it("diagrams saved on one laptop open on another", async () => {
+    const store = await createMongoDiagramStore(db);
+    const base = {
+      id: "d-mongo",
+      name: "Config B",
+      diagram: {
+        schemaVersion: 1,
+        equipment: [],
+        connections: []
+      },
+      version: 1,
+      active: false,
+      createdAt: "2026-11-01T00:00:00.000Z",
+      updatedAt: "2026-11-01T00:00:00.000Z"
+    };
+    await store.create(base);
+    await store.create({
+      ...base,
+      id: "d-other",
+      name: "Config A",
+      active: true
+    });
+
+    // Saving against the right version bumps it...
+    const saved = await store.update(
+      "d-mongo",
+      { name: "Config B2" },
+      1
+    );
+    expect(saved).toMatchObject({
+      name: "Config B2",
+      version: 2
+    });
+    // ...and a stale version is refused.
+    expect(
+      await store.update("d-mongo", { name: "x" }, 1)
+    ).toBe(null);
+
+    // Only one diagram stays active.
+    await store.setActive("d-mongo");
+    const all = await store.list();
+    expect(
+      all.filter((d) => d.active).map((d) => d.id)
+    ).toEqual(["d-mongo"]);
+
+    expect(await store.remove("d-other")).toBe(true);
+    expect(await store.get("d-other")).toBe(null);
   });
 
   it("password reset works across laptops", async () => {

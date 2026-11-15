@@ -60,7 +60,16 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
-  overflow: hidden;
+}
+
+/* Not overflow: hidden, so row menus can extend past the card;
+   round the header's corners instead. */
+.library-table thead th:first-child {
+  border-top-left-radius: 11px;
+}
+
+.library-table thead th:last-child {
+  border-top-right-radius: 11px;
 }
 
 .library-empty {
@@ -169,8 +178,133 @@
   white-space: nowrap;
 }
 
-.library-actions .users-link + .users-link {
-  margin-left: 16px;
+.library-actions-inner {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.library-open {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.library-open:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: #eef2ff;
+}
+
+.row-menu {
+  position: relative;
+}
+
+.row-menu-button {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.row-menu-button svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.row-menu-button:hover,
+.row-menu-button[aria-expanded="true"] {
+  background: #f3f4f6;
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.library-open:focus-visible,
+.row-menu-button:focus-visible,
+.row-menu-item:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.row-menu-list {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 20;
+  min-width: 220px;
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgb(17 24 39 / 0.14);
+  text-align: left;
+}
+
+.row-menu-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.row-menu-item:hover:not(:disabled),
+.row-menu-item:focus-visible {
+  background: #f3f4f6;
+}
+
+.row-menu-item-danger {
+  color: var(--danger);
+  margin-top: 4px;
+  position: relative;
+}
+
+.row-menu-item-danger::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  top: -3px;
+  border-top: 1px solid var(--border);
+}
+
+.row-menu-item-danger:hover:not(:disabled) {
+  background: var(--danger-bg);
+}
+
+.row-menu-item:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.row-menu-hint {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
 }
 
 /* Operator picker (storyboard 1.2) */
@@ -238,7 +372,15 @@
 
   .library-actions {
     grid-column: 1 / -1;
-    text-align: left;
+  }
+
+  .library-actions-inner {
+    justify-content: flex-start;
+  }
+
+  .row-menu-list {
+    left: 0;
+    right: auto;
   }
 
   .library-pick {

@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState
+} from "react";
 import { useAuth } from "../auth/AuthContext";
 import { canEdit } from "../auth/roles";
 import { ExportDialog } from "../components/ExportDialog";
@@ -218,54 +224,54 @@ export function LibraryPage({
                       ` by ${d.updatedByName}`}
                   </td>
                   <td className="library-actions">
-                    <button
-                      type="button"
-                      className="users-link"
-                      aria-label={`Open ${d.name}`}
-                      onClick={() => onOpen(d.id)}>
-                      Open
-                    </button>
-                    <button
-                      type="button"
-                      className="users-link"
-                      aria-label={`Export ${d.name}`}
-                      onClick={() => setExporting(d.id)}>
-                      Export
-                    </button>
-                    {d.active ? (
+                    <div className="library-actions-inner">
                       <button
                         type="button"
-                        className="users-link users-link-danger"
-                        aria-label={`Make ${d.name} inactive`}
-                        onClick={() => {
-                          setNotice(null);
-                          setStopping(d);
-                        }}>
-                        Make inactive
+                        className="library-open"
+                        aria-label={`Open ${d.name}`}
+                        onClick={() => onOpen(d.id)}>
+                        Open
                       </button>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          className="users-link"
-                          aria-label={`Make ${d.name} active`}
-                          onClick={() =>
-                            void handleActivate(d)
-                          }>
-                          Make active
-                        </button>
-                        <button
-                          type="button"
-                          className="users-link users-link-danger"
-                          aria-label={`Delete ${d.name}`}
-                          onClick={() => {
-                            setNotice(null);
-                            setDeleting(d);
-                          }}>
-                          Delete
-                        </button>
-                      </>
-                    )}
+                      <RowMenu
+                        name={d.name}
+                        items={[
+                          {
+                            label: "Export…",
+                            onSelect: () => setExporting(d.id)
+                          },
+                          d.active
+                            ? {
+                                label: "Make inactive…",
+                                hint: "Stop showing it live",
+                                onSelect: () => {
+                                  setNotice(null);
+                                  setStopping(d);
+                                }
+                              }
+                            : {
+                                label: "Make active",
+                                hint: "Show it to operators",
+                                onSelect: () =>
+                                  void handleActivate(d)
+                              },
+                          d.active
+                            ? {
+                                label: "Delete…",
+                                hint: "Make it inactive first",
+                                danger: true,
+                                disabled: true
+                              }
+                            : {
+                                label: "Delete…",
+                                danger: true,
+                                onSelect: () => {
+                                  setNotice(null);
+                                  setDeleting(d);
+                                }
+                              }
+                        ]}
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -497,5 +503,127 @@ function DeleteDialog({
         </button>
       </div>
     </Modal>
+  );
+}
+
+type MenuItem = {
+  label: string;
+  hint?: string;
+  danger?: boolean;
+  disabled?: boolean;
+  onSelect?: () => void;
+};
+
+// The "⋯" menu at the end of each row: keeps the row to one
+// clear action (Open) and tucks the rest away. Keyboard: arrows
+// move, Escape closes and returns focus to the button.
+function RowMenu({
+  name,
+  items
+}: {
+  name: string;
+  items: MenuItem[];
+}) {
+  const [open, setOpen] = useState(false);
+  const button = useRef<HTMLButtonElement>(null);
+  const menu = useRef<HTMLDivElement>(null);
+  const id = useId();
+
+  useEffect(() => {
+    if (!open) return;
+    const items = () =>
+      Array.from(
+        menu.current?.querySelectorAll<HTMLButtonElement>(
+          "[role=menuitem]:not(:disabled)"
+        ) ?? []
+      );
+    items()[0]?.focus();
+
+    function onPointer(e: PointerEvent) {
+      const target = e.target as Node;
+      if (
+        !menu.current?.contains(target) &&
+        !button.current?.contains(target)
+      ) {
+        setOpen(false);
+      }
+    }
+    function onKey(e: KeyboardEvent) {
+      const list = items();
+      const at = list.indexOf(
+        document.activeElement as HTMLButtonElement
+      );
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setOpen(false);
+        button.current?.focus();
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        list[(at + 1) % list.length]?.focus();
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        list[(at - 1 + list.length) % list.length]?.focus();
+      } else if (e.key === "Tab") {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div className="row-menu">
+      <button
+        ref={button}
+        type="button"
+        className="row-menu-button"
+        aria-label={`More actions for ${name}`}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={open ? id : undefined}
+        onClick={() => setOpen((o) => !o)}>
+        <svg viewBox="0 0 20 20" aria-hidden="true">
+          <circle cx="4" cy="10" r="1.7" />
+          <circle cx="10" cy="10" r="1.7" />
+          <circle cx="16" cy="10" r="1.7" />
+        </svg>
+      </button>
+      {open && (
+        <div
+          ref={menu}
+          id={id}
+          role="menu"
+          aria-label={`Actions for ${name}`}
+          className="row-menu-list">
+          {items.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              role="menuitem"
+              disabled={item.disabled}
+              className={
+                item.danger
+                  ? "row-menu-item row-menu-item-danger"
+                  : "row-menu-item"
+              }
+              onClick={() => {
+                setOpen(false);
+                item.onSelect?.();
+              }}>
+              <span>{item.label}</span>
+              {item.hint && (
+                <span className="row-menu-hint">
+                  {item.hint}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

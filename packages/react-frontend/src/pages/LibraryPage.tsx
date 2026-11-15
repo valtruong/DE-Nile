@@ -236,12 +236,12 @@ export function LibraryPage({
                         name={d.name}
                         items={[
                           {
-                            label: "Export…",
+                            label: "Export",
                             onSelect: () => setExporting(d.id)
                           },
                           d.active
                             ? {
-                                label: "Make inactive…",
+                                label: "Make inactive",
                                 hint: "Stop showing it live",
                                 onSelect: () => {
                                   setNotice(null);
@@ -256,13 +256,13 @@ export function LibraryPage({
                               },
                           d.active
                             ? {
-                                label: "Delete…",
+                                label: "Delete",
                                 hint: "Make it inactive first",
                                 danger: true,
                                 disabled: true
                               }
                             : {
-                                label: "Delete…",
+                                label: "Delete",
                                 danger: true,
                                 onSelect: () => {
                                   setNotice(null);

@@ -257,7 +257,7 @@ export function DiagramPage({
                       : undefined
                   }
                   onClick={() => setExporting(true)}>
-                  Export…
+                  Export
                 </button>
               )}
               {meta.id && (
@@ -265,7 +265,7 @@ export function DiagramPage({
                   type="button"
                   className="btn-secondary"
                   onClick={() => openSave("copy")}>
-                  Save as new…
+                  Save as new
                 </button>
               )}
               <button
@@ -273,7 +273,7 @@ export function DiagramPage({
                 className="btn-primary"
                 disabled={!dirty}
                 onClick={() => openSave("save")}>
-                {dirty ? "Save…" : "Saved"}
+                {dirty ? "Save" : "Saved"}
               </button>
             </>
           ) : (

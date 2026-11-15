@@ -9,6 +9,7 @@ import { AuthError } from "../auth/authApi";
 import { useAuth } from "../auth/AuthContext";
 import { canEdit } from "../auth/roles";
 import { DiagramView } from "../components/DiagramView";
+import { ExportDialog } from "../components/ExportDialog";
 import { Modal } from "../components/Modal";
 import {
   createDiagram,
@@ -78,6 +79,7 @@ export function DiagramPage({
     canvas: Canvas;
   } | null>(null);
   const [leaving, setLeaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
   // Fetches the diagram; returns an error message instead of
@@ -249,6 +251,19 @@ export function DiagramPage({
                 <button
                   type="button"
                   className="btn-secondary"
+                  title={
+                    dirty
+                      ? "Exports the last saved version"
+                      : undefined
+                  }
+                  onClick={() => setExporting(true)}>
+                  Export…
+                </button>
+              )}
+              {meta.id && (
+                <button
+                  type="button"
+                  className="btn-secondary"
                   onClick={() => openSave("copy")}>
                   Save as new…
                 </button>
@@ -288,6 +303,13 @@ export function DiagramPage({
           onClose={() => setSaving(null)}
           onSwitchToCopy={() => openSave("copy")}
           onSaved={handleSaved}
+        />
+      )}
+
+      {exporting && meta.id && (
+        <ExportDialog
+          diagramId={meta.id}
+          onClose={() => setExporting(false)}
         />
       )}
 

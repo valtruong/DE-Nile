@@ -11,10 +11,12 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@de-nile/pid-viewer": "0.1.0",
     "@xyflow/react": "^12.12.0",
+    "html-to-image": "1.11.11",
+    "jspdf": "4.2.1",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "@de-nile/pid-viewer": "0.1.0"
+    "react-dom": "^19.2.8"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

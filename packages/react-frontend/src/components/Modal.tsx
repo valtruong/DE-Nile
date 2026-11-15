@@ -6,11 +6,14 @@ import "./ui.css";
 export function Modal({
   title,
   onClose,
-  children
+  children,
+  wide = false
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  /** For dialogs with a preview beside the form. */
+  wide?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   // Parents pass a new function each render; keep the latest
@@ -48,7 +51,7 @@ export function Modal({
       }}>
       <div
         ref={ref}
-        className="modal"
+        className={wide ? "modal modal-wide" : "modal"}
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title">

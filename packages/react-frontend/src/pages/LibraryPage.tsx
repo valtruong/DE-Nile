@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../auth/AuthContext";
 import { canEdit } from "../auth/roles";
+import { ExportDialog } from "../components/ExportDialog";
 import { Modal } from "../components/Modal";
 import {
   activateDiagram,
@@ -59,6 +60,9 @@ export function LibraryPage({
     useState<DiagramSummary | null>(null);
   const [stopping, setStopping] =
     useState<DiagramSummary | null>(null);
+  const [exporting, setExporting] = useState<string | null>(
+    null
+  );
 
   const load = useCallback(
     () =>
@@ -221,6 +225,13 @@ export function LibraryPage({
                       onClick={() => onOpen(d.id)}>
                       Open
                     </button>
+                    <button
+                      type="button"
+                      className="users-link"
+                      aria-label={`Export ${d.name}`}
+                      onClick={() => setExporting(d.id)}>
+                      Export
+                    </button>
                     {d.active ? (
                       <button
                         type="button"
@@ -261,6 +272,13 @@ export function LibraryPage({
             </tbody>
           </table>
         </div>
+      )}
+
+      {exporting && (
+        <ExportDialog
+          diagramId={exporting}
+          onClose={() => setExporting(null)}
+        />
       )}
 
       {stopping && (

@@ -71,7 +71,8 @@ export function DiagramView({
   embedded = false,
   diagram,
   onChange,
-  minimap = true
+  minimap = true,
+  initialTheme = "dark"
 }: {
   editable: boolean;
   telemetry?: DiagramTelemetry;
@@ -82,8 +83,10 @@ export function DiagramView({
   onChange?: (canvas: Canvas) => void;
   /** Hide the minimap in small previews. */
   minimap?: boolean;
+  /** Light is used for exported images and PDFs. */
+  initialTheme?: Theme;
 }) {
-  const [theme, setTheme] = useState<Theme>("dark");
+  const [theme, setTheme] = useState<Theme>(initialTheme);
   // Read once: give the component a new `key` to show another
   // diagram, so each one keeps its own nodes and pipes.
   const [initialDiagram] = useState(() => {
@@ -144,6 +147,7 @@ export function DiagramView({
       }}>
       <button
         type="button"
+        data-export-hide
         onClick={() =>
           setTheme((currentTheme) =>
             currentTheme === "dark" ? "light" : "dark"

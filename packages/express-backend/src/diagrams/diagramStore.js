@@ -71,6 +71,17 @@ export async function createMongoDiagramStore(db) {
       );
     },
 
+    // Nothing is live until another diagram is made active.
+    async setInactive(id) {
+      return fromDoc(
+        await diagrams.findOneAndUpdate(
+          { _id: id },
+          { $set: { active: false } },
+          { returnDocument: "after" }
+        )
+      );
+    },
+
     async remove(id) {
       const { deletedCount } = await diagrams.deleteOne({
         _id: id
@@ -128,6 +139,15 @@ export function createJsonDiagramStore(file) {
       const record = all.find((d) => d.id === id);
       if (!record) return null;
       for (const d of all) d.active = d.id === id;
+      writeAll(file, all);
+      return record;
+    },
+
+    async setInactive(id) {
+      const all = readAll(file);
+      const record = all.find((d) => d.id === id);
+      if (!record) return null;
+      record.active = false;
       writeAll(file, all);
       return record;
     },

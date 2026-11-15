@@ -77,6 +77,16 @@ export async function activateDiagram(
   );
 }
 
+/** Stops showing it live; operators see "No live diagram yet". */
+export async function deactivateDiagram(
+  id: string
+): Promise<void> {
+  await apiCall(
+    "POST",
+    `/api/diagrams/${encodeURIComponent(id)}/deactivate`
+  );
+}
+
 export async function deleteDiagram(id: string): Promise<void> {
   await apiCall(
     "DELETE",

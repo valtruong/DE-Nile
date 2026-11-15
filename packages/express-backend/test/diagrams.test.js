@@ -287,6 +287,43 @@ describe("active diagram and viewing permissions", () => {
     ).toBe(403);
   });
 
+  it("can stop showing a diagram live, then delete it", async () => {
+    const editor = await signedIn("editor@calpoly.edu");
+    const a = await saveAs(editor, "Config A", {
+      active: true
+    });
+
+    const viewer = await signedIn("viewer@calpoly.edu");
+    expect(
+      (await viewer.post(`/api/diagrams/${a.id}/deactivate`))
+        .status
+    ).toBe(403);
+    expect(
+      (
+        await request(app).post(
+          `/api/diagrams/${a.id}/deactivate`
+        )
+      ).status
+    ).toBe(401);
+
+    const res = await editor.post(
+      `/api/diagrams/${a.id}/deactivate`
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.diagram.active).toBe(false);
+
+    // Nobody but editors can open it now...
+    expect(
+      (await viewer.get(`/api/diagrams/${a.id}`)).body.code
+    ).toBe("NOT_ACTIVE");
+    // ...and it can be deleted.
+    await editor.delete(`/api/diagrams/${a.id}`).expect(204);
+    expect(
+      (await editor.post(`/api/diagrams/${a.id}/deactivate`))
+        .status
+    ).toBe(404);
+  });
+
   it("won't delete the active diagram", async () => {
     const editor = await signedIn("editor@calpoly.edu");
     const a = await saveAs(editor, "Config A", {

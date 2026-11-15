@@ -256,6 +256,13 @@ describe.skipIf(!URI)("shared MongoDB accounts", () => {
       all.filter((d) => d.active).map((d) => d.id)
     ).toEqual(["d-mongo"]);
 
+    const off = await store.setInactive("d-mongo");
+    expect(off.active).toBe(false);
+    expect((await store.list()).some((d) => d.active)).toBe(
+      false
+    );
+    await store.setActive("d-mongo");
+
     expect(await store.remove("d-other")).toBe(true);
     expect(await store.get("d-other")).toBe(null);
   });

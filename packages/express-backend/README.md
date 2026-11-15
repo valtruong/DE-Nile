@@ -204,16 +204,17 @@ Admin only (401 signed out, 403 for viewers/editors):
 
 Diagrams (#11, #17, #51):
 
-| Method | Route                        | Who              | Result                                                    |
-| ------ | ---------------------------- | ---------------- | --------------------------------------------------------- |
-| GET    | `/api/diagrams`              | anyone           | `{ diagrams }`: name, version, active, last saved         |
-| GET    | `/api/diagrams/:id`          | anyone if active | `{ diagram }` with the full P&ID config; 403 `NOT_ACTIVE` |
-|        |                              | else editor      | for operators/guests opening a draft                      |
-| POST   | `/api/diagrams`              | editor           | `{ name, diagram, active? }` → 201                        |
-| PUT    | `/api/diagrams/:id`          | editor           | `{ name, diagram, version, active? }` → next version; 409 |
-|        |                              |                  | `VERSION_CONFLICT` if someone saved since `version`       |
-| POST   | `/api/diagrams/:id/activate` | editor           | makes it the one diagram operators can open live          |
-| DELETE | `/api/diagrams/:id`          | editor           | 204; 409 `DIAGRAM_ACTIVE` for the active diagram          |
+| Method | Route                          | Who              | Result                                                     |
+| ------ | ------------------------------ | ---------------- | ---------------------------------------------------------- |
+| GET    | `/api/diagrams`                | anyone           | `{ diagrams }`: name, version, active, last saved          |
+| GET    | `/api/diagrams/:id`            | anyone if active | `{ diagram }` with the full P&ID config; 403 `NOT_ACTIVE`  |
+|        |                                | else editor      | for operators/guests opening a draft                       |
+| POST   | `/api/diagrams`                | editor           | `{ name, diagram, active? }` → 201                         |
+| PUT    | `/api/diagrams/:id`            | editor           | `{ name, diagram, version, active? }` → next version; 409  |
+|        |                                |                  | `VERSION_CONFLICT` if someone saved since `version`        |
+| POST   | `/api/diagrams/:id/activate`   | editor           | makes it the one diagram operators can open live           |
+| POST   | `/api/diagrams/:id/deactivate` | editor           | stops showing it live; operators see "No live diagram yet" |
+| DELETE | `/api/diagrams/:id`            | editor           | 204; 409 `DIAGRAM_ACTIVE` until it is made inactive        |
 
 `diagram` is the shared P&ID configuration v1 (see
 `docs/data-format.md`). Diagrams are stored in the `diagrams`

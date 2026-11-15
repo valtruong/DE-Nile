@@ -414,14 +414,22 @@ function SaveDialog({
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
-        <label className="diagram-check">
-          <input
-            type="checkbox"
-            checked={active}
-            onChange={(e) => setActive(e.target.checked)}
-          />
-          Make this the active diagram for operators
-        </label>
+        {!isNew && meta.active ? (
+          <p className="modal-note">
+            This is the live diagram, so saving updates what
+            operators see. To stop showing it, use{" "}
+            <strong>Make inactive</strong> in the library.
+          </p>
+        ) : (
+          <label className="diagram-check">
+            <input
+              type="checkbox"
+              checked={active}
+              onChange={(e) => setActive(e.target.checked)}
+            />
+            Make this the active diagram for operators
+          </label>
+        )}
         <p className="modal-note">
           {isNew
             ? "Saves a separate diagram in the library; the one you opened stays as it was."

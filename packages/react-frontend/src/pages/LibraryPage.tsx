@@ -4,6 +4,7 @@ import { canEdit } from "../auth/roles";
 import { Modal } from "../components/Modal";
 import {
   activateDiagram,
+  deactivateDiagram,
   deleteDiagram,
   listDiagrams,
   type DiagramSummary
@@ -55,6 +56,8 @@ export function LibraryPage({
   );
   const [notice, setNotice] = useState<string | null>(null);
   const [deleting, setDeleting] =
+    useState<DiagramSummary | null>(null);
+  const [stopping, setStopping] =
     useState<DiagramSummary | null>(null);
 
   const load = useCallback(
@@ -218,7 +221,18 @@ export function LibraryPage({
                       onClick={() => onOpen(d.id)}>
                       Open
                     </button>
-                    {!d.active && (
+                    {d.active ? (
+                      <button
+                        type="button"
+                        className="users-link users-link-danger"
+                        aria-label={`Make ${d.name} inactive`}
+                        onClick={() => {
+                          setNotice(null);
+                          setStopping(d);
+                        }}>
+                        Make inactive
+                      </button>
+                    ) : (
                       <>
                         <button
                           type="button"
@@ -247,6 +261,20 @@ export function LibraryPage({
             </tbody>
           </table>
         </div>
+      )}
+
+      {stopping && (
+        <DeactivateDialog
+          diagram={stopping}
+          onClose={() => setStopping(null)}
+          onDone={() => {
+            setNotice(
+              `${stopping.name} is no longer live. Operators will see "No live diagram yet" until you make a diagram active.`
+            );
+            setStopping(null);
+            void load();
+          }}
+        />
       )}
 
       {deleting && (
@@ -337,6 +365,66 @@ function OperatorPicker({
         </ul>
       )}
     </main>
+  );
+}
+
+// Making the live diagram inactive leaves operators with nothing
+// to watch, so it always asks first.
+function DeactivateDialog({
+  diagram,
+  onClose,
+  onDone
+}: {
+  diagram: DiagramSummary;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function handleDeactivate() {
+    setBusy(true);
+    setError(null);
+    try {
+      await deactivateDiagram(diagram.id);
+      onDone();
+    } catch (err) {
+      setError(errorText(err));
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Modal
+      title={`Stop showing ${diagram.name} live?`}
+      onClose={onClose}>
+      <p className="modal-text">
+        Operators watching it will see &ldquo;No live diagram
+        yet&rdquo; until a diagram is made active again. The
+        diagram itself stays in the library as a draft, so you
+        can make it active again or delete it.
+      </p>
+      {error && (
+        <p className="modal-error" role="alert">
+          {error}
+        </p>
+      )}
+      <div className="modal-buttons">
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={onClose}>
+          Keep it live
+        </button>
+        <button
+          type="button"
+          className="btn-danger"
+          disabled={busy}
+          onClick={() => void handleDeactivate()}>
+          {busy ? "Updating…" : "Make inactive"}
+        </button>
+      </div>
+    </Modal>
   );
 }
 

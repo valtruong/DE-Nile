@@ -186,8 +186,33 @@ export function createDiagramRouter({
     }
   );
 
+  // POST /api/diagrams/:id/deactivate -> stop showing it live.
+  // Operators see "No live diagram yet" until an editor makes
+  // another diagram active. Needed before the diagram can be
+  // deleted.
+  router.post(
+    "/:id/deactivate",
+    editorOnly,
+    async (req, res, next) => {
+      try {
+        const record = await diagramStore.setInactive(
+          req.params.id
+        );
+        if (!record) {
+          return res
+            .status(404)
+            .json({ error: "That diagram doesn't exist." });
+        }
+        res.json({ diagram: toSummary(record) });
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
   // DELETE /api/diagrams/:id -> 204. The active diagram can't be
-  // deleted, so operators never lose their live view.
+  // deleted in one step: make it inactive (or make another one
+  // active) first, so operators never lose their view by accident.
   router.delete("/:id", editorOnly, async (req, res, next) => {
     try {
       const record = await diagramStore.get(req.params.id);
@@ -199,7 +224,7 @@ export function createDiagramRouter({
       if (record.active) {
         return res.status(409).json({
           error:
-            "This is the active diagram. Make another one active before deleting it.",
+            "This is the active diagram. Make it inactive (or make another one active) before deleting it.",
           code: "DIAGRAM_ACTIVE"
         });
       }

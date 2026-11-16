@@ -1,4 +1,4 @@
-import { AuthError } from "./authApi";
+import { apiCall as call } from "./apiCall";
 import type { Role, User } from "./roles";
 
 // Wrappers around the backend's admin-only /api/admin routes.
@@ -13,41 +13,6 @@ export type Invite = {
   invitedByName: string;
   createdAt: number;
 };
-
-const OFFLINE = "Couldn't reach the DE-Nile server. Try again.";
-
-async function call<T>(
-  method: string,
-  path: string,
-  data?: unknown
-): Promise<T> {
-  let res: Response;
-  try {
-    res = await fetch(path, {
-      method,
-      credentials: "same-origin",
-      headers:
-        data === undefined
-          ? undefined
-          : { "Content-Type": "application/json" },
-      body:
-        data === undefined ? undefined : JSON.stringify(data)
-    });
-  } catch {
-    throw new AuthError(OFFLINE);
-  }
-  if (res.status === 204) return null as T;
-  let body: { error?: string; code?: string } & T;
-  try {
-    body = await res.json();
-  } catch {
-    throw new AuthError(OFFLINE);
-  }
-  if (!res.ok) {
-    throw new AuthError(body.error ?? OFFLINE, body.code);
-  }
-  return body;
-}
 
 export async function listUsers(): Promise<AdminUser[]> {
   const body = await call<{ users: AdminUser[] }>(

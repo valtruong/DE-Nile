@@ -2,7 +2,7 @@ import { useAuth } from "../auth/AuthContext";
 import { ROLE_BADGE, initials, isAdmin } from "../auth/roles";
 import "./AppHeader.css";
 
-export type Page = "diagram" | "users";
+export type Page = "diagrams" | "users";
 
 export function AppHeader({
   page,
@@ -32,10 +32,10 @@ export function AppHeader({
             <button
               type="button"
               aria-current={
-                page === "diagram" ? "page" : undefined
+                page === "diagrams" ? "page" : undefined
               }
-              onClick={() => onNavigate("diagram")}>
-              Diagram
+              onClick={() => onNavigate("diagrams")}>
+              Diagrams
             </button>
             <button
               type="button"

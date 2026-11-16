@@ -85,6 +85,11 @@ export const diagramSchema = z
           id: name,
           source: name,
           target: name,
+          // Which side of each symbol the pipe attaches to in the
+          // editor (e.g. "bottom-source"); optional so older files
+          // still load.
+          sourceHandle: name.optional(),
+          targetHandle: name.optional(),
           label: z.string().optional(),
           color: color.default("#667085"),
           routing: z.literal("orthogonal").default("orthogonal")

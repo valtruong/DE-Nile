@@ -1,10 +1,8 @@
 import {
   useCallback,
   useEffect,
-  useRef,
   useState,
-  type FormEvent,
-  type ReactNode
+  type FormEvent
 } from "react";
 import { useAuth } from "../auth/AuthContext";
 import * as admin from "../auth/adminApi";
@@ -16,6 +14,7 @@ import {
   initials,
   type Role
 } from "../auth/roles";
+import { Modal } from "../components/Modal";
 import "./UsersPage.css";
 
 // Storyboard: admin "Users & Roles" screen. Admins see every
@@ -140,7 +139,7 @@ export function UsersPage() {
         </div>
         <button
           type="button"
-          className="users-primary"
+          className="btn-primary"
           onClick={() => {
             setNotice(null);
             setDialog({ kind: "invite" });
@@ -162,7 +161,7 @@ export function UsersPage() {
               <p>{loadError}</p>
               <button
                 type="button"
-                className="users-secondary"
+                className="btn-secondary"
                 onClick={() => void load()}>
                 Try again
               </button>
@@ -358,64 +357,6 @@ export function UsersPage() {
 
 // ---------- Dialogs ----------
 
-function Modal({
-  title,
-  onClose,
-  children
-}: {
-  title: string;
-  onClose: () => void;
-  children: ReactNode;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  // Parents pass a new function each render; keep the latest
-  // without re-running the focus effect below.
-  const closeRef = useRef(onClose);
-  useEffect(() => {
-    closeRef.current = onClose;
-  });
-
-  // Focus the first control on open, Escape closes, and focus
-  // goes back to the button that opened it.
-  useEffect(() => {
-    const previous =
-      document.activeElement as HTMLElement | null;
-    ref.current
-      ?.querySelector<HTMLElement>(
-        "input:checked, input, button.users-primary, button"
-      )
-      ?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeRef.current();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      previous?.focus();
-    };
-  }, []);
-
-  return (
-    <div
-      className="modal-backdrop"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}>
-      <div
-        ref={ref}
-        className="modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="modal-title">
-        <h2 id="modal-title" className="modal-title">
-          {title}
-        </h2>
-        {children}
-      </div>
-    </div>
-  );
-}
-
 function ChangeRoleDialog({
   user,
   isMe,
@@ -504,13 +445,13 @@ function ChangeRoleDialog({
         <div className="modal-buttons">
           <button
             type="button"
-            className="users-secondary"
+            className="btn-secondary"
             onClick={onClose}>
             Cancel
           </button>
           <button
             type="submit"
-            className="users-primary"
+            className="btn-primary"
             disabled={saving || role === user.role}>
             {saving
               ? "Saving…"
@@ -564,13 +505,13 @@ function RemoveDialog({
       <div className="modal-buttons">
         <button
           type="button"
-          className="users-secondary"
+          className="btn-secondary"
           onClick={onClose}>
           Cancel
         </button>
         <button
           type="button"
-          className="users-danger"
+          className="btn-danger"
           disabled={removing}
           onClick={() => void handleRemove()}>
           {removing ? "Removing…" : "Remove account"}
@@ -597,13 +538,13 @@ function OnlyAdminDialog({
       <div className="modal-buttons">
         <button
           type="button"
-          className="users-secondary"
+          className="btn-secondary"
           onClick={onClose}>
           Keep my role
         </button>
         <button
           type="button"
-          className="users-primary"
+          className="btn-primary"
           onClick={onPromote}>
           Promote someone
         </button>
@@ -694,13 +635,13 @@ function InviteDialog({
         <div className="modal-buttons">
           <button
             type="button"
-            className="users-secondary"
+            className="btn-secondary"
             onClick={onClose}>
             Cancel
           </button>
           <button
             type="submit"
-            className="users-primary"
+            className="btn-primary"
             disabled={sending}>
             {sending ? "Sending…" : "Send invite"}
           </button>

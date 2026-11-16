@@ -22,6 +22,17 @@ vi.mock("../src/components/DiagramView", () => ({
     </div>
   )
 }));
+vi.mock("../src/pages/LibraryPage", () => ({
+  LibraryPage: () => <div>Diagram library</div>
+}));
+vi.mock("../src/pages/DiagramPage", () => ({
+  DiagramPage: ({ diagramId }: { diagramId: string }) => (
+    <div>Diagram {diagramId}</div>
+  )
+}));
+vi.mock("../src/pages/UsersPage", () => ({
+  UsersPage: () => <div>Users page</div>
+}));
 vi.mock("../src/ViewerDemo", () => ({
   default: () => <div>Telemetry demo</div>
 }));
@@ -29,9 +40,10 @@ vi.mock("../src/ViewerDemo", () => ({
 function setSession(
   session: AuthValue["session"],
   role: AuthValue["role"],
-  search = ""
+  search = "",
+  hash = ""
 ) {
-  vi.stubGlobal("window", { location: { search } });
+  vi.stubGlobal("window", { location: { search, hash } });
   vi.mocked(useAuth).mockReturnValue({
     session,
     role,
@@ -54,13 +66,30 @@ it("waits for the session check before rendering the demo", () => {
   setSession({ status: "loading" }, null, "?viewerDemo=1");
   expect(renderToStaticMarkup(<App />)).toBe("");
 });
-it("preserves the team's guest view-only diagram", () => {
+it("opens on the diagram library for guests", () => {
   setSession({ status: "guest" }, "viewer");
   const html = renderToStaticMarkup(<App />);
-  expect(html).toContain("Read-only diagram");
+  expect(html).toContain("Diagram library");
   expect(html).toContain("Account header");
 });
-it("preserves editor permissions on the default diagram", () => {
+it("opens a saved diagram from its address", () => {
+  setSession(
+    { status: "guest" },
+    "viewer",
+    "",
+    "#diagram/abc-123"
+  );
+  expect(renderToStaticMarkup(<App />)).toContain(
+    "Diagram abc-123"
+  );
+});
+it("only shows Users & Roles to admins", () => {
+  setSession({ status: "guest" }, "viewer", "", "#users");
+  const html = renderToStaticMarkup(<App />);
+  expect(html).not.toContain("Users page");
+  expect(html).toContain("Diagram library");
+});
+it("routes editors to the library too", () => {
   setSession(
     {
       status: "signedIn",
@@ -74,7 +103,7 @@ it("preserves editor permissions on the default diagram", () => {
     "editor"
   );
   expect(renderToStaticMarkup(<App />)).toContain(
-    "Editable diagram"
+    "Diagram library"
   );
 });
 it("lets an existing viewer use the read-only telemetry demo", () => {

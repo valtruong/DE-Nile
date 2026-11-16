@@ -12,6 +12,14 @@ import {
 } from "@de-nile/pid-viewer";
 
 import { equipmentKinds } from "./diagram/equipmentKinds";
+import {
+  isDefaultOrientation,
+  normalizeOrientation,
+  orientPoint,
+  orientPosition,
+  orientationTransform,
+  type Orientation
+} from "./diagram/orientation";
 
 const symbolSizes = {
   tank: 130,
@@ -60,18 +68,33 @@ function Port({
   id,
   position,
   top,
-  left
+  left,
+  orientation
 }: {
   id: string;
   position: Position;
   top: string;
   left: string;
+  orientation: Orientation;
 }) {
+  const unchanged = isDefaultOrientation(orientation);
+  // Ports follow the artwork: move the anchor and the side the pipe leaves from.
+  const point = orientPoint(
+    { x: parseFloat(left), y: parseFloat(top) },
+    orientation
+  );
+  const orientedPosition = orientPosition(
+    position,
+    orientation
+  );
   const style = {
     width: "10px",
     height: "10px",
-    top,
-    left,
+    top: unchanged ? top : `${point.y}%`,
+    left: unchanged ? left : `${point.x}%`,
+    ...(unchanged
+      ? {}
+      : { transform: "translate(-50%, -50%)" }),
     background: "transparent",
     border: "none"
   };
@@ -81,25 +104,32 @@ function Port({
       <Handle
         type="source"
         id={`${id}-source`}
-        position={position}
+        position={orientedPosition}
         style={style}
       />
 
       <Handle
         type="target"
         id={`${id}-target`}
-        position={position}
+        position={orientedPosition}
         style={style}
       />
     </>
   );
 }
 
-function SymbolPorts({ kind }: { kind: SymbolKind }) {
+function SymbolPorts({
+  kind,
+  orientation
+}: {
+  kind: SymbolKind;
+  orientation: Orientation;
+}) {
   if (kind === "tank") {
     return (
       <>
         <Port
+          orientation={orientation}
           id="top"
           position={Position.Top}
           top="4.5%"
@@ -107,6 +137,7 @@ function SymbolPorts({ kind }: { kind: SymbolKind }) {
         />
 
         <Port
+          orientation={orientation}
           id="bottom"
           position={Position.Bottom}
           top="88.5%"
@@ -119,6 +150,7 @@ function SymbolPorts({ kind }: { kind: SymbolKind }) {
   if (kind === "pressureTransducer") {
     return (
       <Port
+        orientation={orientation}
         id="bottom"
         position={Position.Bottom}
         top="71%"
@@ -131,6 +163,7 @@ function SymbolPorts({ kind }: { kind: SymbolKind }) {
     return (
       <>
         <Port
+          orientation={orientation}
           id="fuel-top"
           position={Position.Top}
           top="3.5%"
@@ -138,6 +171,7 @@ function SymbolPorts({ kind }: { kind: SymbolKind }) {
         />
 
         <Port
+          orientation={orientation}
           id="oxidizer-top"
           position={Position.Top}
           top="3.5%"
@@ -151,6 +185,7 @@ function SymbolPorts({ kind }: { kind: SymbolKind }) {
     return (
       <>
         <Port
+          orientation={orientation}
           id="left"
           position={Position.Left}
           top="57%"
@@ -158,6 +193,7 @@ function SymbolPorts({ kind }: { kind: SymbolKind }) {
         />
 
         <Port
+          orientation={orientation}
           id="right"
           position={Position.Right}
           top="55.5%"
@@ -171,6 +207,7 @@ function SymbolPorts({ kind }: { kind: SymbolKind }) {
   return (
     <>
       <Port
+        orientation={orientation}
         id="left"
         position={Position.Left}
         top="51.5%"
@@ -178,6 +215,7 @@ function SymbolPorts({ kind }: { kind: SymbolKind }) {
       />
 
       <Port
+        orientation={orientation}
         id="right"
         position={Position.Right}
         top="51.5%"
@@ -192,6 +230,8 @@ function PIDSymbolNode({ data }: NodeProps<SymbolNode>) {
   const display = data.binding
     ? formatReading(data.binding, data.reading)
     : undefined;
+
+  const orientation = normalizeOrientation(data.orientation);
 
   const isPressureTransducer =
     data.kind === "pressureTransducer";
@@ -224,12 +264,27 @@ function PIDSymbolNode({ data }: NodeProps<SymbolNode>) {
             width: `${symbolSize}px`,
             height: `${symbolSize}px`
           }}>
-          <EquipmentSymbol
-            kind={equipmentKinds[data.kind]}
-            visualState={data.visualState}
-            size={symbolSize}
+          <div
+            data-rotation={orientation.rotation}
+            data-flipped={orientation.flipX}
+            style={{
+              width: `${symbolSize}px`,
+              height: `${symbolSize}px`,
+              transform: isDefaultOrientation(orientation)
+                ? undefined
+                : orientationTransform(orientation),
+              transformOrigin: "50% 50%"
+            }}>
+            <EquipmentSymbol
+              kind={equipmentKinds[data.kind]}
+              visualState={data.visualState}
+              size={symbolSize}
+            />
+          </div>
+          <SymbolPorts
+            kind={data.kind}
+            orientation={orientation}
           />
-          <SymbolPorts kind={data.kind} />
         </div>
       </div>
 

@@ -16,6 +16,7 @@ import {
 } from "@xyflow/react";
 
 import PIDSymbolNode from "../PIDSymbolNode";
+import { OrientationControls } from "./OrientationControls";
 import { createInitialDiagram } from "../diagram/defaultDiagram";
 import {
   useTelemetryReadings,
@@ -86,7 +87,7 @@ export function DiagramView({
     }));
     return diagram;
   });
-  const [nodes, , onNodesChange] = useNodesState(
+  const [nodes, setNodes, onNodesChange] = useNodesState(
     initialDiagram.nodes
   );
   const [edges, setEdges, onEdgesChange] = useEdgesState(
@@ -156,6 +157,11 @@ export function DiagramView({
         minZoom={0.1}
         fitView>
         <FitDiagram />
+        <OrientationControls
+          nodes={nodes}
+          setNodes={setNodes}
+          canEdit={canEdit}
+        />
         <Background
           variant={BackgroundVariant.Lines}
           gap={16}

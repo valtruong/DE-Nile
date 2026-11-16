@@ -1,5 +1,6 @@
 import type { Binding, Reading } from "@de-nile/pid-viewer";
 import type { Node } from "@xyflow/react";
+import type { Orientation } from "./orientation";
 
 export type SymbolKind =
   | "checkValve"
@@ -20,6 +21,8 @@ export type SymbolNodeData = {
   kind: SymbolKind;
   label: string;
   visualState?: ComponentVisualState;
+  /** Editor layout only; telemetry never changes it. */
+  orientation?: Orientation;
   binding?: Binding;
   reading?: Reading;
 };

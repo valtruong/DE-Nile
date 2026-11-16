@@ -1,4 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState
+} from "react";
 
 import {
   ReactFlow,
@@ -10,6 +15,9 @@ import {
   useEdgesState,
   useNodesState,
   type Connection,
+  type Edge,
+  ConnectionLineType,
+  Panel,
   useReactFlow,
   useNodesInitialized,
   useStore
@@ -17,6 +25,13 @@ import {
 
 import PIDSymbolNode from "../PIDSymbolNode";
 import { OrientationControls } from "./OrientationControls";
+import { computeLabelSides } from "../diagram/labelLayout";
+import {
+  PIPE_WIDTH,
+  canConnect,
+  createPipe
+} from "../diagram/pipes";
+import { PipeTools } from "./PipeTools";
 import { createInitialDiagram } from "../diagram/defaultDiagram";
 import {
   useTelemetryReadings,
@@ -28,6 +43,7 @@ import {
 } from "../telemetry/componentStates";
 import { withTelemetryReadings } from "../telemetry/withTelemetryReadings";
 import "@xyflow/react/dist/style.css";
+import "../diagram/pipes.css";
 import "@de-nile/pid-viewer/style.css";
 
 type Theme = "dark" | "light";
@@ -90,24 +106,72 @@ export function DiagramView({
   const [nodes, setNodes, onNodesChange] = useNodesState(
     initialDiagram.nodes
   );
-  const [edges, setEdges, onEdgesChange] = useEdgesState(
-    initialDiagram.edges
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(
+    initialDiagram.edges as Edge[]
   );
 
   const readings = useTelemetryReadings(telemetry);
   const canEdit = editable && !telemetry;
-  const displayedNodes = telemetry
+  const shownNodes = telemetry
     ? withTelemetryReadings(nodes, telemetry.bindings, readings)
     : nodes;
+  // Labels pick a free side based on where everything currently sits.
+  const labelSides = useMemo(
+    () => computeLabelSides(nodes, edges),
+    [nodes, edges]
+  );
+  const displayedNodes = useMemo(
+    () =>
+      shownNodes.map((node) => ({
+        ...node,
+        data: { ...node.data, labelSide: labelSides[node.id] }
+      })),
+    [shownNodes, labelSides]
+  );
 
   const onConnect = useCallback(
     (connection: Connection) => {
       if (!canEdit) return;
       setEdges((currentEdges) =>
-        addEdge(connection, currentEdges)
+        canConnect(connection, currentEdges)
+          ? addEdge(
+              createPipe(connection, currentEdges),
+              currentEdges
+            )
+          : currentEdges
       );
     },
     [canEdit, setEdges]
+  );
+
+  // Deleting a pipe is quick; deleting equipment asks first.
+  const onBeforeDelete = useCallback(
+    async ({
+      nodes: doomedNodes,
+      edges: doomedEdges
+    }: {
+      nodes: typeof nodes;
+      edges: typeof edges;
+    }) => {
+      if (doomedNodes.length === 0) return true;
+      const names = doomedNodes
+        .map((node) => node.data.label)
+        .join(", ");
+      const connected = edges.filter((edge) =>
+        doomedNodes.some(
+          (node) =>
+            edge.source === node.id || edge.target === node.id
+        )
+      ).length;
+      const ok = window.confirm(
+        `Delete ${names} and its ${connected} connection(s)?\n\n` +
+          "To remove only a pipe, click the pipe and press Delete."
+      );
+      return ok
+        ? { nodes: doomedNodes, edges: doomedEdges }
+        : false;
+    },
+    [edges]
   );
 
   return (
@@ -149,6 +213,16 @@ export function DiagramView({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onBeforeDelete={onBeforeDelete}
+        isValidConnection={(connection) =>
+          connection.source !== connection.target
+        }
+        connectionLineType={ConnectionLineType.Step}
+        connectionLineStyle={{
+          stroke: "#667085",
+          strokeWidth: PIPE_WIDTH
+        }}
+        elevateEdgesOnSelect
         nodesDraggable={canEdit}
         nodesConnectable={canEdit}
         elementsSelectable={canEdit}
@@ -160,8 +234,17 @@ export function DiagramView({
         <OrientationControls
           nodes={nodes}
           setNodes={setNodes}
+          setEdges={setEdges}
+          edges={edges}
           canEdit={canEdit}
         />
+        <Panel position="top-center">
+          <PipeTools
+            edges={edges}
+            setEdges={setEdges}
+            canEdit={canEdit}
+          />
+        </Panel>
         <Background
           variant={BackgroundVariant.Lines}
           gap={16}

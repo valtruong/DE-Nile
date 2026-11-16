@@ -6,8 +6,10 @@ import {
 import {
   NodeToolbar,
   Position,
+  useReactFlow,
   useUpdateNodeInternals
 } from "@xyflow/react";
+import type { Edge } from "@xyflow/react";
 import type { SymbolNode } from "../diagram/types";
 import {
   flipHorizontal,
@@ -46,6 +48,18 @@ const actions: Action[] = [
   }
 ];
 
+const iconButtonStyle = {
+  width: "32px",
+  height: "32px",
+  fontSize: "18px",
+  lineHeight: 1,
+  color: "var(--pid-stroke)",
+  background: "transparent",
+  border: "1px solid var(--pid-stroke)",
+  borderRadius: "4px",
+  cursor: "pointer"
+} as const;
+
 /**
  * Editor-only layout tools for the selected equipment. Orientation is
  * saved with the node's layout data; it never touches telemetry or
@@ -54,13 +68,18 @@ const actions: Action[] = [
 export function OrientationControls({
   nodes,
   setNodes,
+  edges,
+  setEdges,
   canEdit
 }: {
   nodes: SymbolNode[];
   setNodes: Dispatch<SetStateAction<SymbolNode[]>>;
+  edges: Edge[];
+  setEdges: Dispatch<SetStateAction<Edge[]>>;
   canEdit: boolean;
 }) {
   const updateNodeInternals = useUpdateNodeInternals();
+  const { deleteElements } = useReactFlow();
 
   // Ports move with the artwork, so React Flow must re-measure them.
   const signature = nodes
@@ -79,6 +98,30 @@ export function OrientationControls({
     .filter((node) => node.selected)
     .map((node) => node.id);
   if (!canEdit || selectedIds.length === 0) return null;
+
+  const selected = new Set(selectedIds);
+  const hasPipes = edges.some(
+    (edge) =>
+      selected.has(edge.source) || selected.has(edge.target)
+  );
+
+  // Removes the pipes only; the selected equipment stays on the diagram.
+  function disconnect() {
+    setEdges((current) =>
+      current.filter(
+        (edge) =>
+          !selected.has(edge.source) &&
+          !selected.has(edge.target)
+      )
+    );
+  }
+
+  // Same path as pressing Delete: React Flow asks for confirmation first.
+  function removeComponents() {
+    void deleteElements({
+      nodes: selectedIds.map((id) => ({ id }))
+    });
+  }
 
   function applyToSelection(apply: Action["apply"]) {
     setNodes((current) =>
@@ -122,20 +165,34 @@ export function OrientationControls({
             title={action.label}
             aria-label={action.label}
             onClick={() => applyToSelection(action.apply)}
-            style={{
-              width: "32px",
-              height: "32px",
-              fontSize: "18px",
-              lineHeight: 1,
-              color: "var(--pid-stroke)",
-              background: "transparent",
-              border: "1px solid var(--pid-stroke)",
-              borderRadius: "4px",
-              cursor: "pointer"
-            }}>
+            style={iconButtonStyle}>
             {action.icon}
           </button>
         ))}
+        <button
+          type="button"
+          title="Remove connections (keeps the component)"
+          aria-label="Remove connections"
+          disabled={!hasPipes}
+          onClick={disconnect}
+          style={{
+            ...iconButtonStyle,
+            cursor: hasPipes ? "pointer" : "not-allowed",
+            opacity: hasPipes ? 1 : 0.4
+          }}>
+          ✂
+        </button>
+        <button
+          type="button"
+          title="Delete component"
+          aria-label="Delete component"
+          onClick={removeComponents}
+          style={{
+            ...iconButtonStyle,
+            color: "var(--pid-state-closed)"
+          }}>
+          ✕
+        </button>
       </div>
     </NodeToolbar>
   );

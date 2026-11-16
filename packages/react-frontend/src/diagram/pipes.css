@@ -1,0 +1,11 @@
+/* Pipes are thin; make them obvious to hover and select. */
+.react-flow__edge {
+  cursor: pointer;
+}
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke-width: 5px !important;
+}
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke-width: 6px !important;
+  filter: drop-shadow(0 0 4px var(--pid-stroke));
+}

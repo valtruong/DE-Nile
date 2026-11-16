@@ -17,7 +17,9 @@ definitions that drift apart.
   `pressure-transducer`, and `engine`.
 - `connections`: unique IDs, existing source/target equipment
   IDs, optional label, six-digit hex color (default `#667085`),
-  and `routing: "orthogonal"`.
+  `routing: "orthogonal"`, and optional `sourceHandle` /
+  `targetHandle` (which side of each symbol the pipe attaches to
+  in the editor, e.g. `"bottom-source"`).
 - Optional equipment `binding`: `topic`, `valueType` (`number`,
   `string`, or `boolean`), optional display `unit`, numeric
   `precision` (0–6), and explicit
@@ -37,3 +39,18 @@ diagram with `JSON.stringify(diagram, null, 2)` preserves the
 layout and bindings. Live readings, connections to hardware, and
 credentials are never part of the file. Saving/editor UI is
 outside these three tasks.
+
+Saved diagrams (#17, #11, #51) are stored in this format by the
+backend's `/api/diagrams` routes. The editor converts its canvas
+to and from it in
+`packages/react-frontend/src/diagram/diagramFormat.ts`.
+
+Importing a file (#32, **Diagrams → Import P&ID**, editors only)
+is more forgiving than saving: it accepts editor-style symbol
+names (`checkValve`, `Check Valve`), places components that have
+no position, skips pipes to missing components and drops invalid
+bindings, then asks the editor to pick a type for unknown
+symbols and add tags that are missing or repeated. The result is
+checked with `parseDiagram` before it's saved as a new draft.
+That logic is in
+`packages/react-frontend/src/diagram/importDiagram.ts`.

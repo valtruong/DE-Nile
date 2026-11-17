@@ -1,3 +1,4 @@
+import type { CSSProperties, ReactNode } from "react";
 import {
   Handle,
   Position,
@@ -12,14 +13,21 @@ import {
 } from "@de-nile/pid-viewer";
 
 import { equipmentKinds } from "./diagram/equipmentKinds";
-
-const symbolSizes = {
-  tank: 130,
-  engine: 180,
-  pneumaticValve: 70,
-  checkValve: 70,
-  pressureTransducer: 50
-} as const satisfies Record<SymbolKind, number>;
+import { portDefs, symbolSizes } from "./diagram/ports";
+import {
+  chooseLabelSide,
+  labelInset,
+  slotSide,
+  type LabelSlot
+} from "./diagram/labelPlacement";
+import {
+  isDefaultOrientation,
+  normalizeOrientation,
+  orientPoint,
+  orientPosition,
+  orientationTransform,
+  type Orientation
+} from "./diagram/orientation";
 
 function ValveStateLabel({
   state
@@ -60,18 +68,33 @@ function Port({
   id,
   position,
   top,
-  left
+  left,
+  orientation
 }: {
   id: string;
   position: Position;
   top: string;
   left: string;
+  orientation: Orientation;
 }) {
+  const unchanged = isDefaultOrientation(orientation);
+  // Ports follow the artwork: move the anchor and the side the pipe leaves from.
+  const point = orientPoint(
+    { x: parseFloat(left), y: parseFloat(top) },
+    orientation
+  );
+  const orientedPosition = orientPosition(
+    position,
+    orientation
+  );
   const style = {
     width: "10px",
     height: "10px",
-    top,
-    left,
+    top: unchanged ? top : `${point.y}%`,
+    left: unchanged ? left : `${point.x}%`,
+    ...(unchanged
+      ? {}
+      : { transform: "translate(-50%, -50%)" }),
     background: "transparent",
     border: "none"
   };
@@ -81,109 +104,126 @@ function Port({
       <Handle
         type="source"
         id={`${id}-source`}
-        position={position}
+        position={orientedPosition}
         style={style}
       />
 
       <Handle
         type="target"
         id={`${id}-target`}
-        position={position}
+        position={orientedPosition}
         style={style}
       />
     </>
   );
 }
 
-function SymbolPorts({ kind }: { kind: SymbolKind }) {
-  if (kind === "tank") {
-    return (
-      <>
-        <Port
-          id="top"
-          position={Position.Top}
-          top="4.5%"
-          left="50%"
-        />
-
-        <Port
-          id="bottom"
-          position={Position.Bottom}
-          top="88.5%"
-          left="50%"
-        />
-      </>
-    );
-  }
-
-  if (kind === "pressureTransducer") {
-    return (
-      <Port
-        id="bottom"
-        position={Position.Bottom}
-        top="71%"
-        left="50%"
-      />
-    );
-  }
-
-  if (kind === "engine") {
-    return (
-      <>
-        <Port
-          id="fuel-top"
-          position={Position.Top}
-          top="3.5%"
-          left="42%"
-        />
-
-        <Port
-          id="oxidizer-top"
-          position={Position.Top}
-          top="3.5%"
-          left="58%"
-        />
-      </>
-    );
-  }
-
-  if (kind === "pneumaticValve") {
-    return (
-      <>
-        <Port
-          id="left"
-          position={Position.Left}
-          top="57%"
-          left="8%"
-        />
-
-        <Port
-          id="right"
-          position={Position.Right}
-          top="55.5%"
-          left="58%"
-        />
-      </>
-    );
-  }
-
-  // Check valve pipe entry and exit positions
+function SymbolPorts({
+  kind,
+  orientation
+}: {
+  kind: SymbolKind;
+  orientation: Orientation;
+}) {
   return (
     <>
-      <Port
-        id="left"
-        position={Position.Left}
-        top="51.5%"
-        left="30%"
-      />
-
-      <Port
-        id="right"
-        position={Position.Right}
-        top="51.5%"
-        left="55%"
-      />
+      {portDefs[kind].map((port) => (
+        <Port
+          key={port.id}
+          orientation={orientation}
+          id={port.id}
+          position={port.position}
+          top={`${port.top}%`}
+          left={`${port.left}%`}
+        />
+      ))}
     </>
+  );
+}
+
+// Labels that leave the default spot are positioned around the symbol box.
+type Inset = { x: number; y: number };
+
+/**
+ * Position a label around the drawn artwork. `inset` is the empty space
+ * between the symbol box and the artwork, so labels sit close to what you see.
+ */
+function slotStyle(
+  slot: LabelSlot,
+  inset: Inset
+): CSSProperties {
+  const side = slotSide(slot);
+  const align = slot.endsWith("-start")
+    ? "start"
+    : slot.endsWith("-end")
+      ? "end"
+      : "center";
+
+  if (side === "top" || side === "bottom") {
+    const across: CSSProperties =
+      align === "start"
+        ? { left: inset.x, textAlign: "left" }
+        : align === "end"
+          ? { right: inset.x, textAlign: "right" }
+          : {
+              left: "50%",
+              transform: "translateX(-50%)",
+              textAlign: "center"
+            };
+    return side === "top"
+      ? {
+          bottom: `calc(100% - ${inset.y}px)`,
+          paddingBottom: "4px",
+          ...across
+        }
+      : {
+          top: `calc(100% - ${inset.y}px)`,
+          paddingTop: "4px",
+          ...across
+        };
+  }
+
+  const along: CSSProperties =
+    align === "start"
+      ? { top: inset.y }
+      : align === "end"
+        ? { bottom: inset.y }
+        : { top: "50%", transform: "translateY(-50%)" };
+  return side === "right"
+    ? {
+        left: `calc(100% - ${inset.x}px)`,
+        paddingLeft: "6px",
+        textAlign: "left",
+        ...along
+      }
+    : {
+        right: `calc(100% - ${inset.x}px)`,
+        paddingRight: "6px",
+        textAlign: "right",
+        ...along
+      };
+}
+
+function SideLabel({
+  side,
+  inset,
+  children
+}: {
+  side: LabelSlot;
+  inset: Inset;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      data-label-side={side}
+      style={{
+        position: "absolute",
+        width: "120px",
+        lineHeight: 1.2,
+        ...slotStyle(side, inset)
+      }}>
+      {children}
+    </div>
   );
 }
 
@@ -193,8 +233,16 @@ function PIDSymbolNode({ data }: NodeProps<SymbolNode>) {
     ? formatReading(data.binding, data.reading)
     : undefined;
 
+  const orientation = normalizeOrientation(data.orientation);
+
   const isPressureTransducer =
     data.kind === "pressureTransducer";
+
+  // Move the label to a side with no pipe; the default spot stays unchanged.
+  const labelSide =
+    data.labelSide ?? chooseLabelSide(data.kind, orientation);
+  const labelIsDefault =
+    labelSide === (isPressureTransducer ? "right" : "bottom");
 
   const valveState =
     data.visualState === "open" ||
@@ -224,38 +272,103 @@ function PIDSymbolNode({ data }: NodeProps<SymbolNode>) {
             width: `${symbolSize}px`,
             height: `${symbolSize}px`
           }}>
-          <EquipmentSymbol
-            kind={equipmentKinds[data.kind]}
-            visualState={data.visualState}
-            size={symbolSize}
+          <div
+            data-rotation={orientation.rotation}
+            data-flipped={orientation.flipX}
+            style={{
+              width: `${symbolSize}px`,
+              height: `${symbolSize}px`,
+              transform: isDefaultOrientation(orientation)
+                ? undefined
+                : orientationTransform(orientation),
+              transformOrigin: "50% 50%"
+            }}>
+            <EquipmentSymbol
+              kind={equipmentKinds[data.kind]}
+              visualState={data.visualState}
+              size={symbolSize}
+            />
+          </div>
+          <SymbolPorts
+            kind={data.kind}
+            orientation={orientation}
           />
-          <SymbolPorts kind={data.kind} />
+          {!labelIsDefault && (
+            <SideLabel
+              side={labelSide}
+              inset={labelInset(data.kind, orientation)}>
+              <div>{data.label}</div>
+              {data.kind === "pneumaticValve" && (
+                <ValveStateLabel state={valveState} />
+              )}
+              {display &&
+                !(
+                  data.kind === "pneumaticValve" && valveState
+                ) && (
+                  <div
+                    className="pid-telemetry-reading"
+                    style={{
+                      paddingTop: "4px",
+                      fontSize: "12px",
+                      lineHeight: 1.4,
+                      color:
+                        data.reading?.status === "stale"
+                          ? "var(--pid-state-stale)"
+                          : "var(--pid-stroke)"
+                    }}>
+                    {display.text}
+                  </div>
+                )}
+            </SideLabel>
+          )}
         </div>
       </div>
 
-      <div
-        style={
-          isPressureTransducer
-            ? {
-                position: "absolute",
-                top: "6px",
-                left: "calc(50% + 32px)",
-                width: "150px",
-                textAlign: "left",
-                lineHeight: 1.2
-              }
-            : undefined
-        }>
-        {data.label}
-      </div>
+      {labelIsDefault && (
+        <div
+          data-label-side={labelSide}
+          style={
+            isPressureTransducer
+              ? {
+                  position: "absolute",
+                  top: "6px",
+                  left: "calc(50% + 32px)",
+                  width: "150px",
+                  textAlign: "left",
+                  lineHeight: 1.2
+                }
+              : undefined
+          }>
+          {data.label}
+          {isPressureTransducer && display && (
+            // Keep the reading with its label, beside the symbol, so it does
+            // not land on the pipe that leaves the bottom port.
+            <div
+              className="pid-telemetry-reading"
+              style={{
+                paddingTop: "4px",
+                fontSize: "12px",
+                lineHeight: 1.4,
+                color:
+                  data.reading?.status === "stale"
+                    ? "var(--pid-state-stale)"
+                    : "var(--pid-stroke)"
+              }}>
+              {display.text}
+            </div>
+          )}
+        </div>
+      )}
 
-      {data.kind === "pneumaticValve" && (
+      {labelIsDefault && data.kind === "pneumaticValve" && (
         // Reserve the status line so stale/unavailable transitions keep ports fixed.
         <div style={{ height: "19px", display: "flow-root" }}>
           <ValveStateLabel state={valveState} />
         </div>
       )}
-      {display &&
+      {labelIsDefault &&
+        display &&
+        !isPressureTransducer &&
         !(data.kind === "pneumaticValve" && valveState) && (
           <div
             className="pid-telemetry-reading"

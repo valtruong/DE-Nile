@@ -96,3 +96,42 @@ it("keeps Valerie's valve state label without adding a duplicate telemetry label
   expect(html).toContain("CLOSED");
   expect(html).not.toContain("pid-telemetry-reading");
 });
+
+it("rotates the artwork and moves its ports without changing handle ids", () => {
+  const html = render({
+    kind: "pneumaticValve",
+    label: "PV101",
+    orientation: { rotation: 90, flipX: true }
+  });
+  expect(html).toContain('data-rotation="90"');
+  expect(html).toContain("rotate(90deg) scaleX(-1)");
+  expect(html).toContain('data-handle="left-source"');
+  expect(html).toContain('data-handle="right-target"');
+});
+
+it("leaves the default orientation untouched", () => {
+  const html = render({
+    kind: "tank",
+    label: "TK101"
+  });
+  expect(html).toContain('data-rotation="0"');
+  expect(html).not.toContain("rotate(");
+});
+
+it("moves the label beside a rotated valve and keeps its state text with it", () => {
+  const html = render({
+    kind: "pneumaticValve",
+    label: "PV101",
+    orientation: { rotation: 90, flipX: false },
+    visualState: "open"
+  });
+  expect(html).toContain('data-label-side="right"');
+  expect(html).not.toContain('data-label-side="bottom"');
+  expect(html).toContain("PV101");
+  expect(html).toContain("OPEN");
+});
+
+it("keeps the label below by default when no pipe leaves there", () => {
+  const html = render({ kind: "engine", label: "LC301" });
+  expect(html).toContain('data-label-side="bottom"');
+});

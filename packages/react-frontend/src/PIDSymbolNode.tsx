@@ -340,6 +340,23 @@ function PIDSymbolNode({ data }: NodeProps<SymbolNode>) {
               : undefined
           }>
           {data.label}
+          {isPressureTransducer && display && (
+            // Keep the reading with its label, beside the symbol, so it does
+            // not land on the pipe that leaves the bottom port.
+            <div
+              className="pid-telemetry-reading"
+              style={{
+                paddingTop: "4px",
+                fontSize: "12px",
+                lineHeight: 1.4,
+                color:
+                  data.reading?.status === "stale"
+                    ? "var(--pid-state-stale)"
+                    : "var(--pid-stroke)"
+              }}>
+              {display.text}
+            </div>
+          )}
         </div>
       )}
 
@@ -351,6 +368,7 @@ function PIDSymbolNode({ data }: NodeProps<SymbolNode>) {
       )}
       {labelIsDefault &&
         display &&
+        !isPressureTransducer &&
         !(data.kind === "pneumaticValve" && valveState) && (
           <div
             className="pid-telemetry-reading"

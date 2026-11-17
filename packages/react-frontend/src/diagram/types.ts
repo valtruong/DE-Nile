@@ -21,6 +21,12 @@ export type ComponentVisualState =
 export type SymbolNodeData = {
   kind: SymbolKind;
   label: string;
+  /** Tag ID shown at the start of the label, e.g. PV101. */
+  tag?: string;
+  /** The rest of the label, e.g. "Fuel main valve". */
+  name?: string;
+  /** False until someone has typed a tag for a newly dropped component. */
+  tagConfirmed?: boolean;
   visualState?: ComponentVisualState;
   /** Editor layout only; telemetry never changes it. */
   orientation?: Orientation;

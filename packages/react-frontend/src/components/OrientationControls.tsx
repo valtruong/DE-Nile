@@ -13,7 +13,6 @@ import type { Edge } from "@xyflow/react";
 import type { SymbolNode } from "../diagram/types";
 import {
   flipHorizontal,
-  flipVertical,
   normalizeOrientation,
   rotate,
   type Orientation
@@ -27,24 +26,14 @@ type Action = {
 
 const actions: Action[] = [
   {
-    label: "Rotate left 90°",
-    icon: "↺",
-    apply: (o) => rotate(o, -90)
-  },
-  {
-    label: "Rotate right 90°",
+    label: "Rotate 90°",
     icon: "↻",
     apply: (o) => rotate(o, 90)
   },
   {
-    label: "Flip horizontal",
+    label: "Mirror flip",
     icon: "⇋",
     apply: flipHorizontal
-  },
-  {
-    label: "Flip vertical",
-    icon: "⇅",
-    apply: flipVertical
   }
 ];
 
@@ -70,13 +59,16 @@ export function OrientationControls({
   setNodes,
   edges,
   setEdges,
-  canEdit
+  canEdit,
+  onDuplicate
 }: {
   nodes: SymbolNode[];
   setNodes: Dispatch<SetStateAction<SymbolNode[]>>;
   edges: Edge[];
   setEdges: Dispatch<SetStateAction<Edge[]>>;
   canEdit: boolean;
+  /** Copy and paste the selected components in one step. */
+  onDuplicate: () => void;
 }) {
   const updateNodeInternals = useUpdateNodeInternals();
   const { deleteElements } = useReactFlow();
@@ -169,6 +161,14 @@ export function OrientationControls({
             {action.icon}
           </button>
         ))}
+        <button
+          type="button"
+          title="Duplicate (Ctrl+C, Ctrl+V)"
+          aria-label="Duplicate"
+          onClick={onDuplicate}
+          style={iconButtonStyle}>
+          ⧉
+        </button>
         <button
           type="button"
           title="Remove connections (keeps the component)"

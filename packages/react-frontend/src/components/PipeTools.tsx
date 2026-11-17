@@ -27,7 +27,7 @@ export function PipeTools({
     fontSize: "12px",
     color: "var(--pid-stroke)",
     background: "var(--pid-surface)",
-    border: "1px solid var(--pid-stroke)",
+    border: "1px solid var(--editor-line)",
     borderRadius: "6px"
   } as const;
 
@@ -50,7 +50,7 @@ export function PipeTools({
           padding: "4px 10px",
           color: "var(--pid-stroke)",
           background: "transparent",
-          border: "1px solid var(--pid-stroke)",
+          border: "1px solid var(--editor-line)",
           borderRadius: "4px",
           cursor: "pointer"
         }}>

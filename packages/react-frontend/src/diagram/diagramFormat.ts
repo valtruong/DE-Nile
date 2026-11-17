@@ -29,6 +29,8 @@ export function pipeStyle(color: string = DEFAULT_PIPE) {
   return {
     type: "step",
     pathOptions: { borderRadius: 0 },
+    // Wide invisible hit area so a thin pipe is easy to click.
+    interactionWidth: 24,
     style: { stroke: color, strokeWidth: 3 }
   };
 }

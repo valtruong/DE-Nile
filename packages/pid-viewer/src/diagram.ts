@@ -83,6 +83,14 @@ export const equipmentSchema = z
   })
   .strict();
 
+/** Keep editor connections and imported diagrams on the same rule. */
+export function connectsToItself(connection: {
+  source: string | null;
+  target: string | null;
+}): boolean {
+  return connection.source === connection.target;
+}
+
 /** Version 1 is DE-Nile's initial interchange format, pending team review. */
 export const diagramSchema = z
   .object({
@@ -128,7 +136,7 @@ export const diagramSchema = z
     };
     const connectionIds = new Set<string>();
     diagram.connections.forEach((edge, index) => {
-      if (edge.source === edge.target) {
+      if (connectsToItself(edge)) {
         ctx.addIssue({
           code: "custom",
           path: ["connections", index, "target"],

@@ -3,6 +3,7 @@ export type { PIDViewerHandle } from "./ViewerViewport";
 export { DiagramLegend } from "./DiagramLegend";
 export {
   parseDiagram,
+  connectsToItself,
   diagramSchema,
   bindingSchema,
   type Diagram,

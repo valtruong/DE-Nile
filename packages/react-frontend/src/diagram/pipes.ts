@@ -1,3 +1,4 @@
+import { connectsToItself } from "@de-nile/pid-viewer";
 import type { Connection, Edge } from "@xyflow/react";
 
 /** Same look as the pipes in the starting diagram. */
@@ -165,7 +166,7 @@ export function canConnect(
   connection: Connection,
   edges: Edge[]
 ): boolean {
-  if (connection.source === connection.target) return false;
+  if (connectsToItself(connection)) return false;
   return !edges.some(
     (edge) =>
       edge.source === connection.source &&

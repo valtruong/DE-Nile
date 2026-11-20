@@ -4,7 +4,7 @@
   font-family: system-ui, sans-serif;
   /* Leave the shared account header visible above the optional demo. */
   height: calc(100dvh - 58px);
-  min-height: 400px;
+  min-height: 0;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -33,10 +33,52 @@
 .demo-canvas {
   position: relative;
   flex: 1;
-  min-height: 300px;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .demo-canvas > div {
   position: absolute;
   inset: 0;
+}
+
+.demo-viewer-toolbar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid #cbd5e1;
+}
+.demo-viewer-toolbar button,
+.demo-viewer-toolbar select {
+  padding: 6px 10px;
+  border: 1px solid #94a3b8;
+  border-radius: 5px;
+  background: white;
+  color: #202939;
+  font: inherit;
+}
+.demo-canvas--compact {
+  flex: none;
+  width: min(320px, 100%);
+  height: 240px;
+}
+.demo-canvas--wide {
+  flex: none;
+  width: min(640px, 100%);
+  height: 220px;
+}
+.demo-app--dark,
+.demo-app--dark header,
+.demo-app--dark .demo-viewer-toolbar {
+  background: #12151b;
+  color: #f8fafc;
+  border-color: #475569;
+}
+.demo-app--dark .demo-viewer-toolbar button,
+.demo-app--dark .demo-viewer-toolbar select {
+  color: #f8fafc;
+  background: #1e293b;
 }

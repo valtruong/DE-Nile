@@ -13,6 +13,7 @@ Use Node.js 22.12+ (or a newer supported release).
 
 ```sh
 npm ci
+npm exec --workspace=de-nile -- playwright install chromium
 npm run build
 npm test
 npm run lint
@@ -107,6 +108,19 @@ files directly. The standalone diagram editor remains planned;
 the existing canvas and demo do not constitute a complete
 editor.
 
+## RiverDash integration handoff
+
+The monitoring demo keeps readings separate from the saved diagram and locks
+editing. A shared diagram controller is also available for switching between
+editing and monitoring; see [shared diagram state](docs/shared-diagram-state.md)
+for how to use it. The default application uses the editor and diagram library
+from main.
+
+The full team-layout sample and install instructions are in
+[the RiverDash handoff guide](docs/riverdash/README.md).
+Open `/?viewerDemo=1&packageDemo=1` during development to preview the
+actual packaged viewer with that layout and simulated telemetry.
+
 ## Testing
 
 ### Running the tests
@@ -115,14 +129,14 @@ The backend isn't an npm workspace, so it gets its own install:
 
 ```sh
 npm ci
+npm exec --workspace=de-nile -- playwright install chromium
 npm ci --prefix packages/express-backend
 npm run build
 npm test
 ```
 
-`npm test` at the root runs every package's tests: the
-standalone frontend, the viewer package, then the backend. To
-run one package at a time:
+`npm test` runs the frontend and viewer Vitest tests, the Playwright
+browser tests, and the backend tests. To run one part at a time:
 
 ```sh
 npm run test --workspace=de-nile                  # react-frontend
@@ -131,33 +145,33 @@ npm test --prefix packages/express-backend        # all backend tests
 npm run test:system --prefix packages/express-backend  # system tests only
 ```
 ### Part 1: Test-Driven Development
- 
+
 **Tool:** Vitest (+ Supertest for the system test)
 **Files:** `packages/pid-viewer/tests/diagram.test.ts`,
 `packages/express-backend/test/validateDiagram.test.js`,
 `packages/express-backend/test/diagrams.test.js`
- 
+
 **Requirement:** A pipe must connect two different components.
 The editor already stopped you from drawing a pipe from a
 component to itself but an imported file could still contain
 one, and the API would save one and reply `201 Created`.
- 
+
 **Red:** These were written before any code
 changed, and all three failed for the right reason:
- 
+
 | Test | Level | Result before the fix |
 |---|---|---|
 | The shared diagram schema rejects a pipe that connects a component to itself | Unit (`pid-viewer`) | The schema accepted the diagram |
 | `diagramProblem` returns "Pipe loop connects tank1 to itself." | Unit (backend validation, new file) | Returned `null` (no problem found) |
 | Saving a diagram with a self-loop pipe through `POST /api/diagrams` is refused | System | Got `201` where `400` was expected |
- 
+
 **Green:** One
 `source === target` check in the schema
 (`pid-viewer/src/diagram.ts`) and one in the backend validation
 (`express-backend/src/diagrams/validateDiagram.js`).
- 
+
 **Refactor:**
- 
+
 - The frontend now has one shared `connectsToItself()` helper in
   `@de-nile/pid-viewer`. The editor (`canConnect` in
   `pipes.ts`) and the importer (the schema) both use it, so the
@@ -166,6 +180,30 @@ changed, and all three failed for the right reason:
   components exist, and they are different) are grouped into one
   helper, `pipeEndsProblem()`.
 All tests stayed green after each refactoring step.
+
+### Part 2: Unit Tests
+
+**Tool:** Vitest
+**Files:** `packages/react-frontend/tests/componentStates.test.ts`,
+`packages/pid-viewer/tests/telemetry.test.ts`
+
+Unit tests call one function at a time with a known input and check
+its result. These four tests cover two functions: `normalizeVisualState`
+and `formatReading`.
+
+| Test | Behavior verified |
+|---|---|
+| Maps valid tank readings to display states | `full`, `half`, and `empty` select the matching tank states |
+| Rejects unsupported or missing tank readings | Returns `undefined` instead of choosing a tank state |
+| Formats a pressure reading of zero | Displays `0.0 kPa` with the configured precision and unit |
+| Handles missing telemetry | Displays `Unavailable`, so missing data is distinguishable from zero |
+
+**Setup:** none beyond the project dependencies. These tests call the
+functions directly and need no server, database, account, or hardware.
+Run them with `npm run test:unit`.
+
+**Limitations:** these tests check the mapping and formatting logic.
+They do not check how the readings look in the browser.
 
 ### Part 3: System Tests
 
@@ -196,6 +234,32 @@ is set, and is skipped otherwise.
 
 **Limitations:** the system tests stop at the API. They don't
 send real email or exercise the React pages.
+
+### Part 4: UI Tests
+
+**Tool:** Playwright (Chromium)
+**File:** `packages/react-frontend/e2e/monitoring.spec.ts`
+
+The tests follow this user story: as an operator, I want to see when
+readings stop updating and when they recover, without moving the diagram.
+Each test opens the monitoring demo and clicks **Continue as viewer**.
+
+| Test | Feature verified |
+|---|---|
+| Pauses simulated updates | Valve and pressure readings change to `Stale` after five seconds; the valve stops showing OPEN/CLOSED and equipment positions stay fixed |
+| Resumes simulated updates | Current valve states and pressure readings return, stale text clears, and equipment positions stay fixed |
+
+**Setup:** install the test browser with
+`npm exec --workspace=de-nile -- playwright install chromium`, then run
+`npm run test:ui`. Playwright starts its own local server on port 4175.
+The tests supply a signed-out session response and use local simulated
+readings, so no backend, account, database, or hardware is needed.
+The browser clock advances through the timeout without a real five-second wait.
+
+**Limitations:** these tests use desktop Chromium and simulated telemetry.
+They do not check real sign-in, live RiverDash data, other browsers, or
+smaller screen sizes. See [TESTING.md](TESTING.md) for more setup details
+and tests we would add next.
 
 ## Access Control (TE6)
 

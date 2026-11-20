@@ -18,16 +18,36 @@ export const simulatedBindings: Record<string, Binding> = {
     topic: "demo.valve.pv101",
     valueType: "string",
     states: [
-      { value: "open", label: "Open", color: "#16794b" },
-      { value: "closed", label: "Closed", color: "#b42318" }
+      {
+        value: "open",
+        label: "Open",
+        color: "#16794b",
+        visualState: "open"
+      },
+      {
+        value: "closed",
+        label: "Closed",
+        color: "#b42318",
+        visualState: "closedPV1"
+      }
     ]
   },
   "pneumatic-valve2": {
     topic: "demo.valve.pv201",
     valueType: "string",
     states: [
-      { value: "open", label: "Open", color: "#16794b" },
-      { value: "closed", label: "Closed", color: "#b42318" }
+      {
+        value: "open",
+        label: "Open",
+        color: "#16794b",
+        visualState: "open"
+      },
+      {
+        value: "closed",
+        label: "Closed",
+        color: "#b42318",
+        visualState: "closedPV1"
+      }
     ]
   }
 };

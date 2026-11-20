@@ -1,3 +1,5 @@
+import { SharedDiagramView } from "./SharedDiagramCanvas";
+export { DiagramCanvas } from "./SharedDiagramCanvas";
 import {
   useCallback,
   useEffect,
@@ -135,6 +137,7 @@ type DiagramViewProps = {
 };
 
 export function DiagramView(props: DiagramViewProps) {
+  if (props.telemetry) return <SharedDiagramView {...props} />;
   // The palette and panels need React Flow's hooks outside the canvas itself.
   return (
     <ReactFlowProvider>

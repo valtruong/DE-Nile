@@ -9,4 +9,12 @@ rmSync(new URL("../dist/bundle.d.ts", import.meta.url), {
   force: true
 });
 
-copyFileSync(new URL('../src/css.d.ts', import.meta.url), new URL('../dist/style.d.ts', import.meta.url));
+copyFileSync(
+  new URL("../src/css.d.ts", import.meta.url),
+  new URL("../dist/style.d.ts", import.meta.url)
+);
+
+copyFileSync(
+  new URL("../src/team-diagram.json", import.meta.url),
+  new URL("../dist/team-diagram.json", import.meta.url)
+);

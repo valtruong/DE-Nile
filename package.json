@@ -5,15 +5,21 @@
     "@eslint/js": "^10.0.1",
     "eslint": "^10.11.0",
     "globals": "^17.12.0",
+    "jsdom": "^26.1.0",
     "prettier": "^3.9.8",
     "typescript-eslint": "^8.69.0"
   },
   "scripts": {
     "format": "prettier --write './**/*.{js,jsx,ts,tsx,css,md,json}' --config ./.prettierrc",
     "build": "npm run build --workspace=@de-nile/pid-viewer && npm run build --workspace=de-nile",
-    "test": "npm run test --workspaces --if-present && npm test --prefix packages/express-backend",
+    "test": "npm run test:unit && npm run test:ui && npm test --prefix packages/express-backend",
     "lint": "npm run lint --workspaces",
-    "test:riverdash": "node scripts/check-riverdash.mjs"
+    "test:riverdash": "node scripts/check-riverdash.mjs",
+    "test:riverdash:websocket": "node scripts/check-riverdash-websocket.mjs",
+    "test:unit": "npm run test:unit --workspaces --if-present",
+    "test:ui": "npm run test:ui --workspace=de-nile",
+    "pretest:unit": "npm run build --workspace=@de-nile/pid-viewer",
+    "pretest:ui": "npm run build --workspace=@de-nile/pid-viewer"
   },
   "private": true,
   "workspaces": [

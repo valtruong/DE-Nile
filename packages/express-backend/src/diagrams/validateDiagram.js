@@ -24,8 +24,6 @@ const isNumber = (v) =>
 const isPlainObject = (v) =>
   v !== null && typeof v === "object" && !Array.isArray(v);
 
-// Both ends of a pipe must be real components, and different
-// ones (the editor's canConnect refuses self-loops too).
 function pipeEndsProblem(edge, ids) {
   if (!ids.has(edge.source) || !ids.has(edge.target)) {
     return `Pipe ${edge.id} connects to a missing component.`;

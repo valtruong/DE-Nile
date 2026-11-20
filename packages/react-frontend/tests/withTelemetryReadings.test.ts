@@ -21,7 +21,7 @@ function nodes() {
     }
   }));
 }
-it("drives Valerie's distinct closed symbols with fresh readings, preserving layout and sample tanks", () => {
+it("drives Valerie's confirmed straight closed symbols with fresh readings, preserving layout and sample tanks", () => {
   const original = nodes();
   const saved = structuredClone(original);
   const result = withTelemetryReadings(
@@ -46,7 +46,7 @@ it("drives Valerie's distinct closed symbols with fresh readings, preserving lay
   expect(
     result.find((node) => node.id === "pneumatic-valve2")?.data
       .visualState
-  ).toBe("closedPV2");
+  ).toBe("closedPV1");
   expect(
     result.find((node) => node.id === "tank1")?.data.visualState
   ).toBe("full");

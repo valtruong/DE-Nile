@@ -61,9 +61,21 @@ describe("canvas ↔ saved diagram", () => {
       value: 1,
       updatedAt: 0
     } as never;
-    const text = JSON.stringify(canvasToDiagram(canvas, meta));
-    expect(text).not.toContain("visualState");
-    expect(text).not.toContain("reading");
+    const saved = canvasToDiagram(canvas, meta);
+    for (const equipment of saved.equipment) {
+      expect(equipment).not.toHaveProperty("visualState");
+      expect(equipment).not.toHaveProperty("reading");
+    }
+    // Configured state artwork is part of a binding, not a live value.
+    expect(
+      saved.equipment.find(
+        (item) => item.id === "pneumatic-valve1"
+      )?.binding
+    ).toEqual(
+      canvas.nodes.find(
+        (node) => node.id === "pneumatic-valve1"
+      )?.data.binding
+    );
   });
 
   it("gives new pipes the default color", () => {

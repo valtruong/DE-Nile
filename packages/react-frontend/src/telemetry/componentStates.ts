@@ -41,9 +41,11 @@ export function normalizeVisualState(
     if (value === "open") return "open";
 
     if (value === "closed") {
-      return nodeId === "pneumatic-valve1"
+      return ["pneumatic-valve1", "pneumatic-valve2"].includes(
+        nodeId
+      )
         ? "closedPV1"
-        : "closedPV2";
+        : undefined;
     }
   }
 

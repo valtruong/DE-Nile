@@ -1,6 +1,6 @@
 {
   "name": "@de-nile/pid-viewer",
-  "version": "0.1.0",
+  "version": "0.1.4",
   "description": "Read-only P&ID viewer and RiverDash telemetry adapter",
   "type": "module",
   "license": "UNLICENSED",
@@ -19,7 +19,8 @@
       "types": "./dist/style.d.ts",
       "default": "./dist/pid-viewer.css"
     },
-    "./example": "./dist/example-diagram.json"
+    "./example": "./dist/example-diagram.json",
+    "./team-example": "./dist/team-diagram.json"
   },
   "sideEffects": [
     "**/*.css"
@@ -27,7 +28,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json && vite build && node scripts/copy-example.mjs",
     "test": "vitest run",
-    "lint": "eslint src tests vite.config.ts"
+    "lint": "eslint src tests vite.config.ts",
+    "test:unit": "vitest run"
   },
   "peerDependencies": {
     "react": "^19.2.0",

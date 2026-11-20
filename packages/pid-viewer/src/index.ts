@@ -1,6 +1,9 @@
 export { PIDViewer, type PIDViewerProps } from "./PIDViewer";
+export type { PIDViewerHandle } from "./ViewerViewport";
+export { DiagramLegend } from "./DiagramLegend";
 export {
   parseDiagram,
+  connectsToItself,
   diagramSchema,
   connectsToItself,
   bindingSchema,
@@ -28,3 +31,14 @@ export {
 } from "./staleness";
 
 export { useTopicReadings } from "./useTopicReadings";
+
+export {
+  RiverDashViewer,
+  useRiverDashSource,
+  type RiverDashViewerProps
+} from "./RiverDashViewer";
+
+export {
+  DiagramSymbolNodeView,
+  resolveEquipmentVisualState
+} from "./DiagramSymbolNode";

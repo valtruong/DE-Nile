@@ -1,4 +1,3 @@
-import { connectsToItself } from "@de-nile/pid-viewer";
 import type { Connection, Edge } from "@xyflow/react";
 import { connectsToItself } from "@de-nile/pid-viewer";
 

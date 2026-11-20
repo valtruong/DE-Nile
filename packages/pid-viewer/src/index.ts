@@ -5,7 +5,6 @@ export {
   parseDiagram,
   connectsToItself,
   diagramSchema,
-  connectsToItself,
   bindingSchema,
   type Diagram,
   type Equipment,

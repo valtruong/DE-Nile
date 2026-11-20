@@ -25,7 +25,7 @@ pressure readings and valve states beneath the equipment labels. Turn off
 simulation to see unavailable-data behavior. The demo never
 connects to hardware.
 
-## Repository structure
+## Repository Structure
 
 DE-Nile is an npm workspace repository. The standalone frontend
 and the reusable viewer are separate packages so RiverDash can
@@ -78,7 +78,7 @@ This tree highlights the main source and documentation files;
 build configuration, reference documents, and other supporting
 files are omitted for readability.
 
-### Package responsibilities
+### Package Responsibilities
 
 - **`react-frontend`** runs the standalone application. Its
   default view uses the team’s authentication flow and diagram
@@ -130,7 +130,7 @@ npm run test --workspace=@de-nile/pid-viewer      # pid-viewer
 npm test --prefix packages/express-backend        # all backend tests
 npm run test:system --prefix packages/express-backend  # system tests only
 ```
-### Part 1: Test-driven development
+### Part 1: Test-Driven Development
  
 **Tool:** Vitest (+ Supertest for the system test)
 **Files:** `packages/pid-viewer/tests/diagram.test.ts`,
@@ -167,7 +167,7 @@ changed, and all three failed for the right reason:
   helper, `pipeEndsProblem()`.
 All tests stayed green after each refactoring step.
 
-### Part 3: System tests
+### Part 3: System Tests
 
 **Tool:** Vitest + Supertest
 **File:** `packages/express-backend/test/system.test.js`
@@ -197,7 +197,7 @@ is set, and is skipped otherwise.
 **Limitations:** the system tests stop at the API. They don't
 send real email or exercise the React pages.
 
-## Access control (TE6)
+## Access Control (TE6)
 
 ### Sign-up and email verification
 ![Sign-up sequence diagram](docs/te6/signup.png)
@@ -208,7 +208,7 @@ send real email or exercise the React pages.
 ### Protected request (admin-only route)
 ![Protected request sequence diagram](docs/te6/protected.png)
 
-## Additional documentation
+## Additional Documentation
 
 - [P&ID data format](docs/data-format.md)
 - [Viewer package and RiverDash integration](packages/pid-viewer/README.md)

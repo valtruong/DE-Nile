@@ -183,6 +183,14 @@ describe("saving (editors only)", () => {
       {
         name: "X",
         diagram: sampleDiagram({
+          connections: [
+            { id: "loop", source: "tank1", target: "tank1" }
+          ]
+        })
+      },
+      {
+        name: "X",
+        diagram: sampleDiagram({
           equipment: [
             ...sampleDiagram().equipment,
             {

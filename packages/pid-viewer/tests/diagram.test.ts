@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseDiagram } from "../src/diagram";
+import { diagramSchema, parseDiagram } from "../src/diagram";
 import example from "../src/example-diagram.json";
 
 describe("diagram configuration", () => {
@@ -53,6 +53,26 @@ describe("diagram configuration", () => {
   ])("rejects invalid configurations", (input) =>
     expect(() => parseDiagram(input)).toThrow()
   );
+  // TE7 TDD: the editor already refuses to draw a pipe from a
+  // component back to itself (canConnect in react-frontend's
+  // pipes.ts). An imported file must follow the same rule.
+  it("rejects a pipe that connects a component to itself", () => {
+    const selfLoop = {
+      ...example,
+      connections: [
+        ...example.connections,
+        { id: "loop", source: "fuel-tank", target: "fuel-tank" }
+      ]
+    };
+    const result = diagramSchema.safeParse(selfLoop);
+    expect(result.success).toBe(false);
+    expect(result.error?.issues).toContainEqual(
+      expect.objectContaining({
+        path: ["connections", example.connections.length, "target"],
+        message: "A pipe can't connect a component to itself"
+      })
+    );
+  });
   it("rejects malformed JSON and unknown equipment kinds", () => {
     expect(() => parseDiagram("{")).toThrow();
     expect(() =>

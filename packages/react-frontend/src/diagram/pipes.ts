@@ -1,5 +1,5 @@
-import { connectsToItself } from "@de-nile/pid-viewer";
 import type { Connection, Edge } from "@xyflow/react";
+import { connectsToItself } from "@de-nile/pid-viewer";
 
 /** Same look as the pipes in the starting diagram. */
 export const DEFAULT_PIPE_COLOR = "#667085";

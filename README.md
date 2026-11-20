@@ -26,7 +26,7 @@ pressure readings and valve states beneath the equipment labels. Turn off
 simulation to see unavailable-data behavior. The demo never
 connects to hardware.
 
-## Repository structure
+## Repository Structure
 
 DE-Nile is an npm workspace repository. The standalone frontend
 and the reusable viewer are separate packages so RiverDash can
@@ -79,7 +79,7 @@ This tree highlights the main source and documentation files;
 build configuration, reference documents, and other supporting
 files are omitted for readability.
 
-### Package responsibilities
+### Package Responsibilities
 
 - **`react-frontend`** runs the standalone application. Its
   default view uses the team’s authentication flow and diagram
@@ -121,7 +121,116 @@ The full team-layout sample and install instructions are in
 Open `/?viewerDemo=1&packageDemo=1` during development to preview the
 actual packaged viewer with that layout and simulated telemetry.
 
-## Access control (TE6)
+## Testing
+
+### Running the tests
+
+The backend isn't an npm workspace, so it gets its own install:
+
+```sh
+npm ci
+npm ci --prefix packages/express-backend
+npm run build
+npm test
+```
+
+`npm test` runs the frontend and viewer Vitest tests, the Playwright
+browser tests, and the backend tests. To run one part at a time:
+
+```sh
+npm run test --workspace=de-nile                  # react-frontend
+npm run test --workspace=@de-nile/pid-viewer      # pid-viewer
+npm test --prefix packages/express-backend        # all backend tests
+npm run test:system --prefix packages/express-backend  # system tests only
+```
+### Part 1: Test-Driven Development
+
+**Tool:** Vitest (+ Supertest for the system test)
+**Files:** `packages/pid-viewer/tests/diagram.test.ts`,
+`packages/express-backend/test/validateDiagram.test.js`,
+`packages/express-backend/test/diagrams.test.js`
+
+**Requirement:** A pipe must connect two different components.
+The editor already stopped you from drawing a pipe from a
+component to itself but an imported file could still contain
+one, and the API would save one and reply `201 Created`.
+
+**Red:** These were written before any code
+changed, and all three failed for the right reason:
+
+| Test | Level | Result before the fix |
+|---|---|---|
+| The shared diagram schema rejects a pipe that connects a component to itself | Unit (`pid-viewer`) | The schema accepted the diagram |
+| `diagramProblem` returns "Pipe loop connects tank1 to itself." | Unit (backend validation, new file) | Returned `null` (no problem found) |
+| Saving a diagram with a self-loop pipe through `POST /api/diagrams` is refused | System | Got `201` where `400` was expected |
+
+**Green:** One
+`source === target` check in the schema
+(`pid-viewer/src/diagram.ts`) and one in the backend validation
+(`express-backend/src/diagrams/validateDiagram.js`).
+
+**Refactor:**
+
+- The frontend now has one shared `connectsToItself()` helper in
+  `@de-nile/pid-viewer`. The editor (`canConnect` in
+  `pipes.ts`) and the importer (the schema) both use it, so the
+  two rules can't drift apart.
+- On the backend, the two checks on a pipe's ends (both
+  components exist, and they are different) are grouped into one
+  helper, `pipeEndsProblem()`.
+All tests stayed green after each refactoring step.
+
+### Part 2: Unit Tests
+
+**Tool:** Vitest
+**Files:** `packages/react-frontend/tests/componentStates.test.ts` and
+`packages/pid-viewer/tests/telemetry.test.ts`
+
+The four cases check valid tank states, unsupported tank readings,
+zero pressure, and missing readings. See [TESTING.md](TESTING.md#part-ii-unit-tests)
+for the inputs and expected results. Run them with `npm run test:unit`.
+
+### Part 3: System Tests
+
+**Tool:** Vitest + Supertest
+**File:** `packages/express-backend/test/system.test.js`
+
+A system test drives one feature end to end through the real
+Express app: HTTP route → session and role check
+(`requireRole`) → validation → data store → HTTP response. Each
+test checks the response **and** what was actually saved.
+
+| Test | Feature verified |
+|---|---|
+| An editor saves a diagram and gets it back | Create → stored → listed in the library → reopened with layout, pipes and telemetry bindings intact |
+| Saves a new version without overwriting a newer save | Version 2 is saved; a save based on version 1 gets 409 and storage keeps version 2 |
+| Refuses an operator's save | 403 "This needs editor permissions." and nothing is stored |
+| Refuses requests from someone not signed in | 401 and nothing is stored |
+| Operators only open the active diagram | Live diagram opens; a draft gets 403 `NOT_ACTIVE` |
+| Rejects a pipe to a missing component | 400 "Pipe line1 connects to a missing component." |
+| Rejects a diagram without a name | 400 "Give the diagram a name." |
+| A new teammate signs up, verifies and signs in | Account stored unverified with a hashed password → sign-in refused (403) → emailed code verifies → signed in |
+
+**Setup:** none. The tests use a temporary JSON data folder
+instead of MongoDB and capture emails instead of sending them,
+so no `.env` or database is needed. `test/mongo.test.js` runs
+the same stores against a real MongoDB when `TEST_MONGODB_URI`
+is set, and is skipped otherwise.
+
+**Limitations:** the system tests stop at the API. They don't
+send real email or exercise the React pages.
+
+### Part 4: UI Tests
+
+**Tool:** Playwright (Chromium)
+**File:** `packages/react-frontend/e2e/monitoring.spec.ts`
+
+Two browser tests follow the guest monitoring flow: pause simulated updates
+and check for stale readings, then resume updates and check that current
+readings return. Both check that equipment positions stay fixed. Run them
+with `npm run test:ui`. See [TESTING.md](TESTING.md) for setup and details.
+
+## Access Control (TE6)
 
 ### Sign-up and email verification
 ![Sign-up sequence diagram](docs/te6/signup.png)
@@ -132,7 +241,7 @@ actual packaged viewer with that layout and simulated telemetry.
 ### Protected request (admin-only route)
 ![Protected request sequence diagram](docs/te6/protected.png)
 
-## Additional documentation
+## Additional Documentation
 
 - [P&ID data format](docs/data-format.md)
 - [Viewer package and RiverDash integration](packages/pid-viewer/README.md)
@@ -145,21 +254,3 @@ final CPSS symbol approval remain open. The GDT adapter uses a
 provisional five-second update-silence timeout; see the package
 README for cached-value handling and configuration. See
 `SPEC.md` and `project-context.md` for project constraints.
-
-
-## Testing
-
-We use Vitest to check application logic and Playwright to test the monitoring
-screen in a browser. To run both:
-
-```sh
-npm install
-npm exec --workspace=de-nile -- playwright install chromium
-npm test
-```
-
-Use `npm run test:unit` or `npm run test:ui` to run them separately. The tests
-use simulated readings, so no hardware or backend server is needed.
-
-See [TESTING.md](TESTING.md) for the TE7 unit and UI test cases, setup details,
-and what we still need to test.

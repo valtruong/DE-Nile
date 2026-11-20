@@ -11,16 +11,17 @@ repository root, run:
 
 ```sh
 npm install
+npm ci --prefix packages/express-backend
 npm exec --workspace=de-nile -- playwright install chromium
 npm test
 ```
 
-The first two commands install the dependencies and test browser. Once
+The install commands set up both packages and the test browser. Once
 those are installed, these tests can run offline.
 
 | Command | What it runs |
 | --- | --- |
-| `npm test` | All Vitest tests, followed by the browser tests |
+| `npm test` | Frontend and viewer Vitest tests, browser tests, then backend tests |
 | `npm run test:unit` | Vitest tests in the frontend and viewer packages |
 | `npm run test:ui` | The two Playwright tests in Chromium |
 | `npm run build` | Production builds of the viewer and frontend |
@@ -110,8 +111,9 @@ function. Each UI test starts with a fresh browser session and supplies
 a signed-out response for `/api/auth/me`, then enters through the guest
 viewer button. The rest of the monitoring screen runs normally.
 
-The root test command covers `react-frontend` and `pid-viewer`. It does
-not run the separate Express backend's tests.
+The root test command runs `react-frontend`, `pid-viewer`, and the separate
+Express backend. The backend uses temporary local data for its system tests;
+its optional MongoDB tests need `TEST_MONGODB_URI`.
 
 ## Other TE7 requirements
 
@@ -121,9 +123,9 @@ check that the correct equipment gets the reading.
 
 TDD means writing a failing test before implementing a behavior, making
 it pass, and then cleaning up the code while keeping tests passing.
-These additions test existing behavior, so they do not provide a new TDD
-example for Part I. Part I's TDD write-up and Part III's two system tests
-still need to be documented for the full assignment.
+The unit and UI additions test existing behavior. The team's Part I TDD
+write-up and Part III system test descriptions are in the root README's
+Testing section.
 
 ## What we would test next
 

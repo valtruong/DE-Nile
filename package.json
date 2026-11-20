@@ -12,7 +12,7 @@
   "scripts": {
     "format": "prettier --write './**/*.{js,jsx,ts,tsx,css,md,json}' --config ./.prettierrc",
     "build": "npm run build --workspace=@de-nile/pid-viewer && npm run build --workspace=de-nile",
-    "test": "npm run test:unit && npm run test:ui",
+    "test": "npm run test:unit && npm run test:ui && npm test --prefix packages/express-backend",
     "lint": "npm run lint --workspaces",
     "test:riverdash": "node scripts/check-riverdash.mjs",
     "test:riverdash:websocket": "node scripts/check-riverdash-websocket.mjs",

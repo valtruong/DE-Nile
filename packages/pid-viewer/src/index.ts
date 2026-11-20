@@ -2,6 +2,7 @@ export { PIDViewer, type PIDViewerProps } from "./PIDViewer";
 export {
   parseDiagram,
   diagramSchema,
+  connectsToItself,
   bindingSchema,
   type Diagram,
   type Equipment,

@@ -72,6 +72,18 @@ export const equipmentSchema = z
   })
   .strict();
 
+/**
+ * A pipe has to run between two different components. The editor
+ * uses this to refuse drawing one, and the schema uses it to refuse
+ * loading one, so both follow the same rule.
+ */
+export function connectsToItself(edge: {
+  source?: string | null;
+  target?: string | null;
+}): boolean {
+  return edge.source != null && edge.source === edge.target;
+}
+
 /** Version 1 is DE-Nile's initial interchange format, pending team review. */
 export const diagramSchema = z
   .object({
@@ -126,7 +138,7 @@ export const diagramSchema = z
             message: "Unknown equipment ID"
           });
       }
-      if (edge.source === edge.target)
+        if (connectsToItself(edge))
         ctx.addIssue({
           code: "custom",
           path: ["connections", index, "target"],

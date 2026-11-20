@@ -24,6 +24,18 @@ const isNumber = (v) =>
 const isPlainObject = (v) =>
   v !== null && typeof v === "object" && !Array.isArray(v);
 
+// Both ends of a pipe must be real components, and different
+// ones (the editor's canConnect refuses self-loops too).
+function pipeEndsProblem(edge, ids) {
+  if (!ids.has(edge.source) || !ids.has(edge.target)) {
+    return `Pipe ${edge.id} connects to a missing component.`;
+  }
+  if (edge.source === edge.target) {
+    return `Pipe ${edge.id} connects ${edge.source} to itself.`;
+  }
+  return null;
+}
+
 // Returns an error message, or null when the diagram is fine.
 export function diagramProblem(diagram) {
   if (!isPlainObject(diagram)) return "Diagram is missing.";
@@ -83,12 +95,8 @@ export function diagramProblem(diagram) {
       return `Two pipes use the ID ${edge.id}.`;
     }
     edgeIds.add(edge.id);
-    if (!ids.has(edge.source) || !ids.has(edge.target)) {
-      return `Pipe ${edge.id} connects to a missing component.`;
-    }
-    if (edge.source === edge.target) {
-      return `Pipe ${edge.id} connects ${edge.source} to itself.`;
-    }
+    const problem = pipeEndsProblem(edge, ids);
+    if (problem) return problem;
   }
   return null;
 }

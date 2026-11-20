@@ -129,6 +129,7 @@ The backend isn't an npm workspace, so it gets its own install:
 
 ```sh
 npm ci
+npm exec --workspace=de-nile -- playwright install chromium
 npm ci --prefix packages/express-backend
 npm run build
 npm test
@@ -183,12 +184,26 @@ All tests stayed green after each refactoring step.
 ### Part 2: Unit Tests
 
 **Tool:** Vitest
-**Files:** `packages/react-frontend/tests/componentStates.test.ts` and
+**Files:** `packages/react-frontend/tests/componentStates.test.ts`,
 `packages/pid-viewer/tests/telemetry.test.ts`
 
-The four cases check valid tank states, unsupported tank readings,
-zero pressure, and missing readings. See [TESTING.md](TESTING.md#part-ii-unit-tests)
-for the inputs and expected results. Run them with `npm run test:unit`.
+Unit tests call one function at a time with a known input and check
+its result. These four tests cover two functions: `normalizeVisualState`
+and `formatReading`.
+
+| Test | Behavior verified |
+|---|---|
+| Maps valid tank readings to display states | `full`, `half`, and `empty` select the matching tank states |
+| Rejects unsupported or missing tank readings | Returns `undefined` instead of choosing a tank state |
+| Formats a pressure reading of zero | Displays `0.0 kPa` with the configured precision and unit |
+| Handles missing telemetry | Displays `Unavailable`, so missing data is distinguishable from zero |
+
+**Setup:** none beyond the project dependencies. These tests call the
+functions directly and need no server, database, account, or hardware.
+Run them with `npm run test:unit`.
+
+**Limitations:** these tests check the mapping and formatting logic.
+They do not check how the readings look in the browser.
 
 ### Part 3: System Tests
 
@@ -225,10 +240,26 @@ send real email or exercise the React pages.
 **Tool:** Playwright (Chromium)
 **File:** `packages/react-frontend/e2e/monitoring.spec.ts`
 
-Two browser tests follow the guest monitoring flow: pause simulated updates
-and check for stale readings, then resume updates and check that current
-readings return. Both check that equipment positions stay fixed. Run them
-with `npm run test:ui`. See [TESTING.md](TESTING.md) for setup and details.
+The tests follow this user story: as an operator, I want to see when
+readings stop updating and when they recover, without moving the diagram.
+Each test opens the monitoring demo and clicks **Continue as viewer**.
+
+| Test | Feature verified |
+|---|---|
+| Pauses simulated updates | Valve and pressure readings change to `Stale` after five seconds; the valve stops showing OPEN/CLOSED and equipment positions stay fixed |
+| Resumes simulated updates | Current valve states and pressure readings return, stale text clears, and equipment positions stay fixed |
+
+**Setup:** install the test browser with
+`npm exec --workspace=de-nile -- playwright install chromium`, then run
+`npm run test:ui`. Playwright starts its own local server on port 4175.
+The tests supply a signed-out session response and use local simulated
+readings, so no backend, account, database, or hardware is needed.
+The browser clock advances through the timeout without a real five-second wait.
+
+**Limitations:** these tests use desktop Chromium and simulated telemetry.
+They do not check real sign-in, live RiverDash data, other browsers, or
+smaller screen sizes. See [TESTING.md](TESTING.md) for more setup details
+and tests we would add next.
 
 ## Access Control (TE6)
 

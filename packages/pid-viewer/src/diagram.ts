@@ -128,6 +128,13 @@ export const diagramSchema = z
     };
     const connectionIds = new Set<string>();
     diagram.connections.forEach((edge, index) => {
+      if (edge.source === edge.target) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["connections", index, "target"],
+          message: "A pipe can't connect a component to itself"
+        });
+      }
       if (connectionIds.has(edge.id))
         ctx.addIssue({
           code: "custom",

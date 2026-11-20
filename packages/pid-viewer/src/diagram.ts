@@ -126,6 +126,12 @@ export const diagramSchema = z
             message: "Unknown equipment ID"
           });
       }
+      if (edge.source === edge.target)
+        ctx.addIssue({
+          code: "custom",
+          path: ["connections", index, "target"],
+          message: "A pipe can't connect a component to itself"
+        });
     });
   });
 

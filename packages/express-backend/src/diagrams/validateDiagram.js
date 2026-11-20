@@ -86,6 +86,9 @@ export function diagramProblem(diagram) {
     if (!ids.has(edge.source) || !ids.has(edge.target)) {
       return `Pipe ${edge.id} connects to a missing component.`;
     }
+    if (edge.source === edge.target) {
+      return `Pipe ${edge.id} connects ${edge.source} to itself.`;
+    }
   }
   return null;
 }

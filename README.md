@@ -130,8 +130,44 @@ npm run test --workspace=@de-nile/pid-viewer      # pid-viewer
 npm test --prefix packages/express-backend        # all backend tests
 npm run test:system --prefix packages/express-backend  # system tests only
 ```
+### Part 1: Test-driven development
+ 
+**Tool:** Vitest (+ Supertest for the system test)
+**Files:** `packages/pid-viewer/tests/diagram.test.ts`,
+`packages/express-backend/test/validateDiagram.test.js`,
+`packages/express-backend/test/diagrams.test.js`
+ 
+**Requirement:** A pipe must connect two different components.
+The editor already stopped you from drawing a pipe from a
+component to itself but an imported file could still contain
+one, and the API would save one and reply `201 Created`.
+ 
+**Red:** These were written before any code
+changed, and all three failed for the right reason:
+ 
+| Test | Level | Result before the fix |
+|---|---|---|
+| The shared diagram schema rejects a pipe that connects a component to itself | Unit (`pid-viewer`) | The schema accepted the diagram |
+| `diagramProblem` returns "Pipe loop connects tank1 to itself." | Unit (backend validation, new file) | Returned `null` (no problem found) |
+| Saving a diagram with a self-loop pipe through `POST /api/diagrams` is refused | System | Got `201` where `400` was expected |
+ 
+**Green:** One
+`source === target` check in the schema
+(`pid-viewer/src/diagram.ts`) and one in the backend validation
+(`express-backend/src/diagrams/validateDiagram.js`).
+ 
+**Refactor:**
+ 
+- The frontend now has one shared `connectsToItself()` helper in
+  `@de-nile/pid-viewer`. The editor (`canConnect` in
+  `pipes.ts`) and the importer (the schema) both use it, so the
+  two rules can't drift apart.
+- On the backend, the two checks on a pipe's ends (both
+  components exist, and they are different) are grouped into one
+  helper, `pipeEndsProblem()`.
+All tests stayed green after each refactoring step.
 
-### System tests
+### Part 3: System tests
 
 **Tool:** Vitest + Supertest
 **File:** `packages/express-backend/test/system.test.js`

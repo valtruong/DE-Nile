@@ -107,6 +107,60 @@ files directly. The standalone diagram editor remains planned;
 the existing canvas and demo do not constitute a complete
 editor.
 
+## Testing
+
+### Running the tests
+
+The backend isn't an npm workspace, so it gets its own install:
+
+```sh
+npm ci
+npm ci --prefix packages/express-backend
+npm run build
+npm test
+```
+
+`npm test` at the root runs every package's tests: the
+standalone frontend, the viewer package, then the backend. To
+run one package at a time:
+
+```sh
+npm run test --workspace=de-nile                  # react-frontend
+npm run test --workspace=@de-nile/pid-viewer      # pid-viewer
+npm test --prefix packages/express-backend        # all backend tests
+npm run test:system --prefix packages/express-backend  # system tests only
+```
+
+### System tests
+
+**Tool:** Vitest + Supertest
+**File:** `packages/express-backend/test/system.test.js`
+
+A system test drives one feature end to end through the real
+Express app: HTTP route → session and role check
+(`requireRole`) → validation → data store → HTTP response. Each
+test checks the response **and** what was actually saved.
+
+| Test | Feature verified |
+|---|---|
+| An editor saves a diagram and gets it back | Create → stored → listed in the library → reopened with layout, pipes and telemetry bindings intact |
+| Saves a new version without overwriting a newer save | Version 2 is saved; a save based on version 1 gets 409 and storage keeps version 2 |
+| Refuses an operator's save | 403 "This needs editor permissions." and nothing is stored |
+| Refuses requests from someone not signed in | 401 and nothing is stored |
+| Operators only open the active diagram | Live diagram opens; a draft gets 403 `NOT_ACTIVE` |
+| Rejects a pipe to a missing component | 400 "Pipe line1 connects to a missing component." |
+| Rejects a diagram without a name | 400 "Give the diagram a name." |
+| A new teammate signs up, verifies and signs in | Account stored unverified with a hashed password → sign-in refused (403) → emailed code verifies → signed in |
+
+**Setup:** none. The tests use a temporary JSON data folder
+instead of MongoDB and capture emails instead of sending them,
+so no `.env` or database is needed. `test/mongo.test.js` runs
+the same stores against a real MongoDB when `TEST_MONGODB_URI`
+is set, and is skipped otherwise.
+
+**Limitations:** the system tests stop at the API. They don't
+send real email or exercise the React pages.
+
 ## Access control (TE6)
 
 ### Sign-up and email verification

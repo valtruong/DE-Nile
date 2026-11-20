@@ -13,6 +13,7 @@ Use Node.js 22.12+ (or a newer supported release).
 
 ```sh
 npm ci
+npm exec --workspace=de-nile -- playwright install chromium
 npm run build
 npm test
 npm run lint
@@ -107,6 +108,19 @@ files directly. The standalone diagram editor remains planned;
 the existing canvas and demo do not constitute a complete
 editor.
 
+## RiverDash integration handoff
+
+The monitoring demo keeps readings separate from the saved diagram and locks
+editing. A shared diagram controller is also available for switching between
+editing and monitoring; see [shared diagram state](docs/shared-diagram-state.md)
+for how to use it. The default application uses the editor and diagram library
+from main.
+
+The full team-layout sample and install instructions are in
+[the RiverDash handoff guide](docs/riverdash/README.md).
+Open `/?viewerDemo=1&packageDemo=1` during development to preview the
+actual packaged viewer with that layout and simulated telemetry.
+
 ## Access control (TE6)
 
 ### Sign-up and email verification
@@ -131,3 +145,21 @@ final CPSS symbol approval remain open. The GDT adapter uses a
 provisional five-second update-silence timeout; see the package
 README for cached-value handling and configuration. See
 `SPEC.md` and `project-context.md` for project constraints.
+
+
+## Testing
+
+We use Vitest to check application logic and Playwright to test the monitoring
+screen in a browser. To run both:
+
+```sh
+npm install
+npm exec --workspace=de-nile -- playwright install chromium
+npm test
+```
+
+Use `npm run test:unit` or `npm run test:ui` to run them separately. The tests
+use simulated readings, so no hardware or backend server is needed.
+
+See [TESTING.md](TESTING.md) for the TE7 unit and UI test cases, setup details,
+and what we still need to test.

@@ -2,3 +2,7 @@ node_modules/
 dist/
 *.tsbuildinfo
 *.tgz
+
+# Browser test artifacts
+playwright-report/
+test-results/

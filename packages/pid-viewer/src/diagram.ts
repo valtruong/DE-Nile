@@ -23,7 +23,18 @@ export const bindingSchema = z
           .object({
             value: scalar,
             label: name,
-            color: color.optional()
+            color: color.optional(),
+            // Explicit artwork mapping; never infer valve semantics from a number.
+            visualState: z
+              .enum([
+                "full",
+                "half",
+                "empty",
+                "open",
+                "closedPV1",
+                "closedPV2"
+              ])
+              .optional()
           })
           .strict()
       )
@@ -85,12 +96,11 @@ export const diagramSchema = z
           id: name,
           source: name,
           target: name,
-          // Which side of each symbol the pipe attaches to in the
-          // editor (e.g. "bottom-source"); optional so older files
-          // still load.
+          label: z.string().optional(),
+          legendLabel: name.optional(),
           sourceHandle: name.optional(),
           targetHandle: name.optional(),
-          label: z.string().optional(),
+          strokeWidth: z.number().positive().max(12).optional(),
           color: color.default("#667085"),
           routing: z.literal("orthogonal").default("orthogonal")
         })
@@ -109,6 +119,13 @@ export const diagramSchema = z
         });
       equipmentIds.add(item.id);
     });
+    const ports: Record<string, string[]> = {
+      tank: ["top", "bottom"],
+      "pressure-transducer": ["bottom"],
+      engine: ["fuel-top", "oxidizer-top"],
+      "pneumatic-valve": ["left", "right"],
+      "check-valve": ["left", "right"]
+    };
     const connectionIds = new Set<string>();
     diagram.connections.forEach((edge, index) => {
       if (connectionIds.has(edge.id))
@@ -119,6 +136,26 @@ export const diagramSchema = z
         });
       connectionIds.add(edge.id);
       for (const endpoint of ["source", "target"] as const) {
+        const item = diagram.equipment.find(
+          (item) => item.id === edge[endpoint]
+        );
+        const handle =
+          endpoint === "source"
+            ? edge.sourceHandle
+            : edge.targetHandle;
+        if (
+          item &&
+          handle &&
+          !ports[item.kind]?.some(
+            (port) => handle === `${port}-${endpoint}`
+          )
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["connections", index, `${endpoint}Handle`],
+            message: "Unknown equipment port"
+          });
+        }
         if (!equipmentIds.has(edge[endpoint]))
           ctx.addIssue({
             code: "custom",

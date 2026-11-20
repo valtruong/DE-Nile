@@ -1,22 +1,18 @@
 import {
   useCallback,
-  useEffect,
   useMemo,
   useState,
-  type ReactNode
+  type ReactNode,
+  type Ref
 } from "react";
 import {
   Background,
-  Controls,
   Handle,
   Position,
   ReactFlow,
   type Node,
   type NodeProps,
-  type NodeChange,
-  useReactFlow,
-  useNodesInitialized,
-  useStore
+  type NodeChange
 } from "@xyflow/react";
 import {
   parseDiagram,
@@ -29,7 +25,16 @@ import {
   type TelemetrySource
 } from "./telemetry";
 import { EquipmentSymbol } from "./symbols";
+import {
+  DiagramSymbolNodeView,
+  resolveEquipmentVisualState
+} from "./DiagramSymbolNode";
 import { useTopicReadings } from "./useTopicReadings";
+import { DiagramLegend } from "./DiagramLegend";
+import {
+  ViewerViewport,
+  type PIDViewerHandle
+} from "./ViewerViewport";
 
 type EquipmentNode = Node<
   {
@@ -37,7 +42,7 @@ type EquipmentNode = Node<
     reading?: Reading;
     symbol?: ReactNode;
   },
-  "equipment"
+  "equipment" | "symbol"
 >;
 
 /** Render values as text as well as optional configured state colors. */
@@ -70,50 +75,56 @@ function PIDSymbolNode({ data }: NodeProps<EquipmentNode>) {
     </div>
   );
 }
-/** Fit after React Flow has measured its panel, never on telemetry ticks. */
-function ResponsiveFit({ diagram }: { diagram: Diagram }) {
-  const { fitBounds, getNodesBounds, getNodes } =
-    useReactFlow();
-  const initialized = useNodesInitialized();
-  const width = useStore((state) => state.width);
-  const height = useStore((state) => state.height);
-  useEffect(() => {
-    if (!initialized || width <= 0 || height <= 0) return;
-    // fitView queues node changes in React Flow; this controlled read-only canvas
-    // instead fits measured bounds directly, without accepting any node edits.
-    const frame = requestAnimationFrame(() => {
-      void fitBounds(getNodesBounds(getNodes()), {
-        padding: 0.2
-      });
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [
-    diagram,
-    fitBounds,
-    getNodesBounds,
-    getNodes,
-    initialized,
-    width,
-    height
-  ]);
-  return null;
+function SymbolLayoutNode(props: NodeProps<EquipmentNode>) {
+  const { equipment, reading, symbol } = props.data;
+  const state = resolveEquipmentVisualState(equipment, reading);
+  return (
+    <DiagramSymbolNodeView
+      {...props}
+      data={{
+        kind: equipment.kind,
+        label: equipment.label,
+        binding: equipment.binding,
+        reading,
+        symbol,
+        visualState: state
+      }}
+    />
+  );
 }
-const nodeTypes = { equipment: PIDSymbolNode };
+const nodeTypes = {
+  equipment: PIDSymbolNode,
+  symbol: SymbolLayoutNode
+};
 
 export interface PIDViewerProps {
+  /** Host toolbar actions. Cleared on unmount or invalid configuration. */
+  ref?: Ref<PIDViewerHandle>;
   diagram: Diagram;
   dataSource?: TelemetrySource;
   className?: string;
+  theme?: "light" | "dark";
+  /** Hide corner controls when the host provides its own toolbar. */
+  showControls?: boolean;
+  /** Fit on mount, layout changes and container resize; never on reading updates. */
+  autoFit?: boolean;
+  /** Use the team's original symbol geometry and named pipe ports. */
+  presentation?: "cards" | "symbols";
   /** Supply the team’s existing SVG components instead of the provisional defaults. */
   renderSymbol?: (equipment: Equipment) => ReactNode;
 }
 
 /** Read-only, parent-sized canvas; changing readings never changes saved positions. */
 export function PIDViewer({
+  ref,
   diagram: input,
   dataSource,
   className = "",
-  renderSymbol
+  renderSymbol,
+  presentation = "cards",
+  theme = "light",
+  showControls = true,
+  autoFit = true
 }: PIDViewerProps) {
   const parsed = useMemo(() => {
     try {
@@ -167,7 +178,7 @@ export function PIDViewer({
   const nodes: EquipmentNode[] =
     diagram?.equipment.map((equipment) => ({
       id: equipment.id,
-      type: "equipment",
+      type: presentation === "symbols" ? "symbol" : "equipment",
       position: { ...equipment.position },
       measured: measurements[equipment.id],
       data: {
@@ -186,11 +197,38 @@ export function PIDViewer({
     diagram?.connections.map((connection) => ({
       ...connection,
       type: "step",
-      style: { stroke: connection.color, strokeWidth: 2 },
+      // Card nodes keep their legacy generic handles; symbols use named ports.
+      sourceHandle:
+        presentation === "symbols"
+          ? connection.sourceHandle
+          : undefined,
+      targetHandle:
+        presentation === "symbols"
+          ? connection.targetHandle
+          : undefined,
+      style: {
+        stroke: connection.color,
+        strokeWidth: connection.strokeWidth ?? 2
+      },
       selectable: false,
       deletable: false,
       reconnectable: false
     })) ?? [];
+  // Equivalent JSON objects and live readings must not reset the user's viewport.
+  const geometryKey = JSON.stringify([
+    presentation,
+    diagram?.equipment.map((item) => [
+      item.id,
+      item.kind,
+      item.label,
+      item.position,
+      measurements[item.id]
+    ]),
+    diagram?.connections.map((connection) => [
+      connection.id,
+      connection.label
+    ])
+  ]);
   if (!diagram)
     return (
       <div role="alert" className="denile-error">
@@ -199,43 +237,53 @@ export function PIDViewer({
     );
   return (
     <div
-      className={`denile-viewer denile-theme denile-theme--light ${className}`}
+      className={`denile-viewer denile-theme denile-theme--${theme} ${className}`}
       role="region"
       aria-label={diagram.name}>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        onNodesChange={onNodesChange}
-        nodesDraggable={false}
-        nodesConnectable={false}
-        elementsSelectable={false}
-        edgesReconnectable={false}
-        deleteKeyCode={null}
-        fitView
-        minZoom={0.1}>
-        <ResponsiveFit diagram={diagram} />
-        <Background />
-        <Controls showInteractive={false} />
-      </ReactFlow>
-      <details className="denile-readings">
-        <summary>Equipment readings</summary>
-        <ul>
-          {diagram.equipment.map((equipment) => (
-            <li key={equipment.id}>
-              <strong>{equipment.label}:</strong>{" "}
-              {
-                formatReading(
-                  equipment.binding,
-                  equipment.binding
-                    ? readings[equipment.binding.topic]
-                    : undefined
-                ).text
-              }
-            </li>
-          ))}
-        </ul>
-      </details>
+      <div className="denile-canvas">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          onNodesChange={onNodesChange}
+          nodesDraggable={false}
+          nodesConnectable={false}
+          elementsSelectable={false}
+          edgesReconnectable={false}
+          deleteKeyCode={null}
+          colorMode={theme}
+          minZoom={0.001}>
+          <ViewerViewport
+            viewerRef={ref}
+            geometryKey={geometryKey}
+            autoFit={autoFit}
+            showControls={showControls}
+          />
+          <Background color="var(--pid-grid)" />
+        </ReactFlow>
+        <details className="denile-readings">
+          <summary>Equipment readings</summary>
+          <ul>
+            {diagram.equipment.map((equipment) => (
+              <li key={equipment.id}>
+                <strong>{equipment.label}:</strong>{" "}
+                {
+                  formatReading(
+                    equipment.binding,
+                    equipment.binding
+                      ? readings[equipment.binding.topic]
+                      : undefined
+                  ).text
+                }
+              </li>
+            ))}
+          </ul>
+        </details>
+      </div>
+      <DiagramLegend
+        diagram={diagram}
+        presentation={presentation}
+      />
     </div>
   );
 }

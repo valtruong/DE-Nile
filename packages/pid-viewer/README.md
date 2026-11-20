@@ -19,13 +19,35 @@ npm run lint
 npm pack --workspace=@de-nile/pid-viewer
 ```
 
-This generates `de-nile-pid-viewer-0.1.0.tgz`. In the RiverDash
+This generates `de-nile-pid-viewer-0.1.4.tgz`. In the RiverDash
 frontend, install that tarball using its absolute path. The
 package is not published to npm. React and React DOM are peer
 dependencies, so RiverDash owns their instances. React Flow is a
 package dependency, Zod is bundled, and CSS is shipped locally.
 
 ## Embed in RiverDash
+
+Version 0.1.3 adds `ref` actions (`zoomIn`, `zoomOut`, `fitView`),
+`showControls`, `autoFit`, and a `theme="light" | "dark"` prop to both viewers.
+This lets a host put controls in its own header, fit the diagram in resized
+panels, and select a matching appearance. See
+`docs/riverdash/VIEWER-CONTROLS.md` in the repository for the complete example
+and validation limits. The default theme is light, corner controls remain
+visible by default, and auto-fit is enabled by default.
+
+Version 0.1.2 also exports `RiverDashViewer` and `useRiverDashSource` for hosts
+that supply their existing GDT. For example:
+
+```tsx
+<RiverDashViewer table={GDT} diagram={diagram} presentation="symbols" />
+```
+
+Import `RiverDashViewer` from `@de-nile/pid-viewer` and ship its CSS as below.
+The component creates no connection and only opens topics in read mode. It
+accepts `staleAfterMs` and `decode` directly. Keep decoder functions stable.
+The original adapter API below remains supported. RiverDash `dev` 2346934 has
+a confirmed upstream text-frame receiver defect; see the repository's
+`docs/riverdash/WEBSOCKET-INTEGRATION.md` before claiming live transport validation.
 
 ```tsx
 import { useMemo } from "react";
@@ -202,3 +224,32 @@ lifecycle used by `PIDViewer`. Topic names are deduplicated, old callbacks
 are ignored after cleanup, and reconnecting starts without old readings.
 The hook does not change equipment positions or assign visual state meanings.
 Its server-rendered snapshot is empty, so server rendering never opens topics.
+
+## Team layout for the first RiverDash integration
+
+Import the complete sample from `@de-nile/pid-viewer/team-example` and render
+`<PIDViewer diagram={parseDiagram(config)} presentation="symbols" dataSource={source} />`.
+The optional `symbols` presentation shares Valerie's actual node renderer with
+the standalone canvas, preserving equipment sizes, labels and named pipe ports.
+The default `cards` presentation remains available for existing integrations.
+
+The sample contains 10 equipment nodes and 9 pipes with the original IDs,
+positions, colors and widths. Its four `demo.*` bindings are placeholders.
+Tank fills are neutral: the editor's full/half/empty sample values are not
+stored as confirmed live tank telemetry. Valve artwork uses explicit
+`binding.states[].visualState` mappings, and clears for missing, stale or
+unconfirmed readings. A state value alone does not establish its meaning.
+
+See `docs/riverdash/README.md` in the repository for handoff instructions.
+Run the standalone frontend and open `/?viewerDemo=1&packageDemo=1` to test
+this packaged component with simulated data. Normal `/?viewerDemo=1` keeps
+the existing team canvas demo. Neither route connects to hardware.
+
+## Color legend (0.1.4)
+
+The viewer displays a legend generated from configured state colors and pipe
+`legendLabel` values. Unknown pipe categories remain neutral Pipe entries.
+Configured state colors also color the symbol artwork; text remains readable.
+The team demo now maps both PV101 and PV201 closed states to the straight
+`closedPV1` artwork, as requested. The alternate closedPV2 asset remains available
+for configurations that explicitly need it. Color-picker UI is still planned.

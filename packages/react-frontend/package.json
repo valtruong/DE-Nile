@@ -8,10 +8,13 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:unit": "vitest run",
+    "test:ui": "playwright test",
+    "test:ui:headed": "playwright test --headed"
   },
   "dependencies": {
-    "@de-nile/pid-viewer": "0.1.0",
+    "@de-nile/pid-viewer": "0.1.4",
     "@xyflow/react": "^12.12.0",
     "html-to-image": "1.11.11",
     "jspdf": "4.2.1",
@@ -20,6 +23,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.65.1",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",

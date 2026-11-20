@@ -97,6 +97,7 @@ const initialNodes: SymbolNode[] = [
 const initialEdges = [
   {
     id: "gn2-line-1",
+    legendLabel: "Other piping (demo)",
     source: "tank2",
     sourceHandle: "top-source",
     target: "tank1",
@@ -107,6 +108,7 @@ const initialEdges = [
   },
   {
     id: "pt101-line",
+    legendLabel: "Other piping (demo)",
     source: "tank1",
     sourceHandle: "top-source",
     target: "pressure-transducer1",
@@ -117,6 +119,7 @@ const initialEdges = [
   },
   {
     id: "pt201-line",
+    legendLabel: "Other piping (demo)",
     source: "pressure-transducer2",
     sourceHandle: "bottom-source",
     target: "tank3",
@@ -127,6 +130,7 @@ const initialEdges = [
   },
   {
     id: "fuel-line-1",
+    legendLabel: "Fuel line (demo)",
     source: "tank1",
     sourceHandle: "bottom-source",
     target: "check-valve1",
@@ -137,6 +141,7 @@ const initialEdges = [
   },
   {
     id: "fuel-line-2",
+    legendLabel: "Fuel line (demo)",
     source: "check-valve1",
     sourceHandle: "right-source",
     target: "pneumatic-valve1",
@@ -147,6 +152,7 @@ const initialEdges = [
   },
   {
     id: "fuel-line-3",
+    legendLabel: "Fuel line (demo)",
     source: "pneumatic-valve1",
     sourceHandle: "right-source",
     target: "engine",
@@ -157,6 +163,7 @@ const initialEdges = [
   },
   {
     id: "oxidizer-line-1",
+    legendLabel: "Oxidizer line (demo)",
     source: "engine",
     sourceHandle: "oxidizer-top-source",
     target: "pneumatic-valve2",
@@ -167,6 +174,7 @@ const initialEdges = [
   },
   {
     id: "oxidizer-line-2",
+    legendLabel: "Oxidizer line (demo)",
     source: "pneumatic-valve2",
     sourceHandle: "right-source",
     target: "check-valve2",
@@ -177,6 +185,7 @@ const initialEdges = [
   },
   {
     id: "oxidizer-line-3",
+    legendLabel: "Oxidizer line (demo)",
     source: "check-valve2",
     sourceHandle: "right-source",
     target: "tank3",

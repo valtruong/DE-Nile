@@ -50,7 +50,9 @@ it("shows valid zero with its unit and precision below the original label", () =
     reading: { status: "available", value: 0 }
   });
   expect(html).toContain("0.0 kPa");
-  expect(html).toContain("position:absolute;top:100%");
+  expect(html.indexOf("0.0 kPa")).toBeGreaterThan(
+    html.indexOf("PT101")
+  );
   expect(html).not.toContain("Unavailable");
 });
 
@@ -94,7 +96,8 @@ it("keeps Valerie's valve state label without adding a duplicate telemetry label
     reading: { status: "available", value: "closed" }
   });
   expect(html).toContain("CLOSED");
-  expect(html).not.toContain("pid-telemetry-reading");
+  expect(html.match(/>CLOSED</g)).toHaveLength(1);
+  expect(html).not.toContain(">Closed<");
 });
 
 it("rotates the artwork and moves its ports without changing handle ids", () => {

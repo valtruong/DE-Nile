@@ -2,10 +2,78 @@
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 300px;
-  color: #202939;
-  background: #f8fafc;
+  min-height: 0;
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  box-sizing: border-box;
+  color: var(--pid-stroke);
+  background: var(--pid-canvas);
   font-family: system-ui, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+.denile-workspace {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.denile-canvas {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+}
+.denile-legend {
+  flex: 0 1 auto;
+  max-height: 35%;
+  overflow: auto;
+  padding: 7px 10px;
+  border-top: 1px solid var(--pid-border);
+  background: var(--pid-surface);
+  color: var(--pid-stroke);
+  font:
+    11px/1.4 system-ui,
+    sans-serif;
+}
+.denile-legend > strong {
+  display: block;
+  margin-bottom: 4px;
+}
+.denile-legend ul {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.denile-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.denile-legend-swatch {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+  border: 1px solid var(--pid-border);
+  border-radius: 2px;
+}
+.denile-legend-swatch--pipe {
+  width: 20px;
+  height: 4px;
+  border: 0;
+}
+.denile-legend-swatch--neutral {
+  background: repeating-linear-gradient(
+    135deg,
+    transparent 0 3px,
+    var(--pid-muted) 3px 4px
+  );
 }
 .denile-viewer .denile-equipment {
   width: 150px;
@@ -16,8 +84,8 @@
   justify-content: center;
   gap: 5px;
   padding: 12px;
-  background: #fff;
-  border: 1px solid #cbd5e1;
+  background: var(--pid-surface);
+  border: 1px solid var(--pid-border);
   border-radius: 8px;
   font-size: 14px;
   text-align: center;
@@ -30,12 +98,14 @@
   position: absolute;
   bottom: 12px;
   right: 12px;
-  max-width: calc(100% - 80px);
+  max-width: calc(100% - 24px);
   max-height: 45%;
   overflow: auto;
   padding: 10px;
-  background: #fff;
-  border: 1px solid #cbd5e1;
+  box-sizing: border-box;
+  color: var(--pid-stroke);
+  background: var(--pid-surface);
+  border: 1px solid var(--pid-border);
   border-radius: 6px;
   font-size: 14px;
 }
@@ -50,6 +120,9 @@
 .denile-theme {
   --pid-stroke: #111827;
   --pid-surface: #ffffff;
+  --pid-canvas: #f8fafc;
+  --pid-border: #cbd5e1;
+  --pid-grid: #cbd5e1;
   --pid-muted: #6b7280;
   --pid-tank-fluid: #8299ff;
   --pid-valve-open: #a5c200;
@@ -61,6 +134,9 @@
 .denile-theme--dark {
   --pid-stroke: #f8fafc;
   --pid-surface: #12151b;
+  --pid-canvas: #12151b;
+  --pid-border: #475569;
+  --pid-grid: #334155;
   --pid-muted: #9ca3af;
   --pid-state-open: #d2e669;
   --pid-state-closed: #ff7b72;

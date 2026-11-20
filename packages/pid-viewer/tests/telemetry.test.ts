@@ -176,14 +176,18 @@ describe("readable state displays", () => {
     unit: "kPa",
     precision: 1
   };
-  it("distinguishes unavailable values from a valid zero", () => {
-    expect(formatReading(numeric, undefined).text).toBe(
-      "Unavailable"
-    );
+  it("formats a valid zero pressure with configured precision and units", () => {
     expect(
       formatReading(numeric, { status: "available", value: 0 })
         .text
     ).toBe("0.0 kPa");
+  });
+  it("labels missing telemetry as unavailable rather than zero", () => {
+    expect(formatReading(numeric, undefined).text).toBe(
+      "Unavailable"
+    );
+  });
+  it("rejects a string reading when the binding requires a number", () => {
     expect(
       formatReading(numeric, {
         status: "available",
